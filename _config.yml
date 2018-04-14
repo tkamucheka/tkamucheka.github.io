@@ -12,6 +12,7 @@ tagline:          'Software Engineer'
 description:      ''
 url:              https://tkamucheka.github.io
 baseurl:          ''
+base_url:         /
 
 author:
   name:           'Tendayi Kamucheka'
