@@ -2,6 +2,7 @@
 layout: post
 title: Hello World
 date: 2018-04-14 12:35:01 -0500
+category: blog
 ---
 
 ![Hello World!]({{ "/assets/hello-world.jpg" | absolute_url }})
