@@ -6,7 +6,7 @@ author: Tendayi Kamucheka
 category: blog
 ---
 
- # VSCode C/C++ Plugin Formatting Fails 
+# VSCode C/C++ Plugin Formatting Fails 
 
 Lately I've been doing a lot of programming in C++ for my work. I have also switched my editor of choice from Atom to VS Code. One of my favorite plugins on VS Code is C/C++ [ms-vscode.cpptools]. This is plugin offers great features like code auto formatting, intelliSense (code suggestions), and syntax highlighting for C and C++. These features are reminiscent of working in Visual Studio and for a text editor, that's plenty.
 
@@ -17,7 +17,7 @@ Thankfully, the cause of this bug is described here: [Formatting Failed C/C++ No
 ```  bash
 $ sudo apt install libncurses5-dev
 $ sudo ln -s /usr/lib/x86_64-linux/libncurses.so.6 \
-/usr/lib/x86_64-linux/libncurses.so.5
+             /usr/lib/x86_64-linux/libncurses.so.5
 ```
 
 Everything should work fine after doing this. Happy coding!
