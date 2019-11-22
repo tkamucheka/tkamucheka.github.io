@@ -15,7 +15,7 @@ Thankfully, the cause of this bug is described here: [Formatting Failed C/C++ No
 ``` bash
 $ sudo apt install libncurses5-dev
 $ sudo ln -s /usr/lib/x86_64-linux/libncurses.so.6 \
- /usr/lib/x86_64-linux/libncurses.so.5
+             /usr/lib/x86_64-linux/libncurses.so.5
 ```
 
 Everything should work fine after doing this. Happy coding!
