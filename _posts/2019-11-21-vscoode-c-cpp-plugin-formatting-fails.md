@@ -8,7 +8,7 @@ category: blog
 
 # VSCode C/C++ Plugin Formatting Fails 
 
-Lately I've been doing a lot of programming in C++ for my work. I have also switched my editor of choice from Atom to VS Code. One of my favorite plugins on VS Code is C/C++ `ms-vscode.cpptools`. This is plugin offers great features like code auto formatting, intelliSense (code suggestions), and syntax highlighting for C and C++. These features are reminiscent of working in Visual Studio and for a text editor, that's plenty.
+Lately I've been doing a lot of programming in C++ for my work. I have also switched my editor of choice from Atom to VS Code. One of my favorite plugins on VS Code is C/C++ [`ms-vscode.cpptools`](https://marketplace.visualstudio.com/items?itemName=ms-vscode.cpptools). This is plugin offers great features like code auto formatting, intelliSense (code suggestions), and syntax highlighting for C and C++. These features are reminiscent of working in Visual Studio and for a text editor, that's plenty.
 
 Since Ubuntu 19.04, there is an annoying bug in the extension where it fails to auto-format code on a fresh install of Ubuntu. I have experienced this with both Ubuntu 19.04 and 19.10.
 
