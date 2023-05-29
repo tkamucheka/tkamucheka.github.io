@@ -4,13 +4,33 @@
  <title>Tendayi Kamucheka</title>
  <link href="http://localhost:4000/atom.xml" rel="self"/>
  <link href="http://localhost:4000/"/>
- <updated>2018-04-14T13:48:27-05:00</updated>
+ <updated>2023-05-28T15:10:29-05:00</updated>
  <id>http://localhost:4000</id>
  <author>
    <name>Tendayi Kamucheka</name>
    <email></email>
  </author>
 
+ 
+ <entry>
+   <title>VSCode C/C++ Plugin Formatting Fails</title>
+   <link href="http://localhost:4000/blog/2019/11/21/vscoode-c-cpp-plugin-formatting-fails/"/>
+   <updated>2019-11-21T00:00:00-06:00</updated>
+   <id>http://localhost:4000/blog/2019/11/21/vscoode-c-cpp-plugin-formatting-fails</id>
+   <content type="html">&lt;p&gt;Lately, I’ve been doing a lot of programming in C++ for my work. I have also switched my editor of choice from Atom to VS Code. One of my favorite plugins on VS Code is C/C++ &lt;a href=&quot;https://marketplace.visualstudio.com/items?itemName=ms-vscode.cpptools&quot;&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;ms-vscode.cpptools&lt;/code&gt;&lt;/a&gt;. This is plugin offers great features like code auto-formatting, IntelliSense (code suggestions), and syntax highlighting for C and C++. These features are reminiscent of working in Visual Studio and for a text editor, that’s plenty.&lt;/p&gt;
+
+&lt;p&gt;Since Ubuntu 19.04, there is an annoying bug in the extension where it fails to auto-format code on a fresh install of Ubuntu. I have experienced this with both Ubuntu 19.04 and 19.10.&lt;/p&gt;
+
+&lt;p&gt;Thankfully, the cause of this bug is described here: &lt;a href=&quot;https://github.com/Microsoft/vscode-cpptools/issues/3271&quot;&gt;Formatting Failed C/C++ No info in Output window · Issue #3271 · Microsoft/vscode-cpptools · GitHub&lt;/a&gt;. Basically, the plugin looks for &lt;strong&gt;libtinfo.so.5&lt;/strong&gt; which is not present on Ubuntu 19.04 and after. Auto formatting fails when the plugin fails to locate the required lib. A solution is described in the comments on the same issue page. Seems sym-linking &lt;strong&gt;libtinfo.so.6&lt;/strong&gt; to &lt;strong&gt;libtinfo.so.5&lt;/strong&gt; solves the issue.&lt;/p&gt;
+
+&lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;sudo &lt;/span&gt;apt &lt;span class=&quot;nb&quot;&gt;install &lt;/span&gt;libncurses5-dev
+&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;sudo ln&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-s&lt;/span&gt; /usr/lib/x86_64-linux/libncurses.so.6 &lt;span class=&quot;se&quot;&gt;\&lt;/span&gt;
+             /usr/lib/x86_64-linux/libncurses.so.5
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Everything should work fine after doing this. Happy coding!&lt;/p&gt;
+</content>
+ </entry>
  
  <entry>
    <title>Hello World</title>

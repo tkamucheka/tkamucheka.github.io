@@ -1,5 +1,6 @@
 body {
-  background-color: #202020
+  background-color: #202020;
+  height: 100%
 }
 
 /* Common */
@@ -28,7 +29,7 @@ body {
 }
 
 #header-wrapper {
-  display: none
+  display: none;
   background-color: #202020;
   width: 100%;
   height: 100px;

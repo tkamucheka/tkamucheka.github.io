@@ -12,7 +12,7 @@
   />
 
   <title>
-     Hello World &middot; Tendayi Kamucheka 
+     Blog &middot; Tendayi Kamucheka 
   </title>
 
   <!-- CSS -->
@@ -102,7 +102,7 @@
         
           
             
-              <a class="sidebar-nav-item" href="/blog/">Blog</a>
+              <a class="sidebar-nav-item active" href="/blog/">Blog</a>
             
           
         
@@ -144,10 +144,40 @@
 
       <div id="header-wrapper"></div>
 
-      <div class="content container"><div class="post">
-  <h1 class="post-title">Hello World</h1>
-  <span class="post-date">14 Apr 2018</span>
-  <p><img src="http://localhost:4000/assets/hello-world.jpg" alt="Hello World!" /></p>
+      <div class="content container"><div class="page">
+  <!-- <h1 class="page-title">Blog</h1> -->
+  <div class="posts">
+  
+  <div class="post">
+    <h1 class="post-title">
+      <a href="/blog/2019/11/21/vscode-c-cpp-plugin-formatting-fails/"> VSCode C/C++ Plugin Formatting Fails </a>
+    </h1>
+
+    <span class="post-date">21 Nov 2019</span>
+
+    <p>Lately, I’ve been doing a lot of programming in C++ for my work. I have also switched my editor of choice from Atom to VS Code. One of my favorite plugins on VS Code is C/C++ <a href="https://marketplace.visualstudio.com/items?itemName=ms-vscode.cpptools"><code class="language-plaintext highlighter-rouge">ms-vscode.cpptools</code></a>. This is plugin offers great features like code auto-formatting, IntelliSense (code suggestions), and syntax highlighting for C and C++. These features are reminiscent of working in Visual Studio and for a text editor, that’s plenty.</p>
+
+<p>Since Ubuntu 19.04, there is an annoying bug in the extension where it fails to auto-format code on a fresh install of Ubuntu. I have experienced this with both Ubuntu 19.04 and 19.10.</p>
+
+<p>Thankfully, the cause of this bug is described here: <a href="https://github.com/Microsoft/vscode-cpptools/issues/3271">Formatting Failed C/C++ No info in Output window · Issue #3271 · Microsoft/vscode-cpptools · GitHub</a>. Basically, the plugin looks for <strong>libtinfo.so.5</strong> which is not present on Ubuntu 19.04 and after. Auto formatting fails when the plugin fails to locate the required lib. A solution is described in the comments on the same issue page. Seems sym-linking <strong>libtinfo.so.6</strong> to <strong>libtinfo.so.5</strong> solves the issue.</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nv">$ </span><span class="nb">sudo </span>apt <span class="nb">install </span>libncurses5-dev
+<span class="nv">$ </span><span class="nb">sudo ln</span> <span class="nt">-s</span> /usr/lib/x86_64-linux/libncurses.so.6 <span class="se">\</span>
+             /usr/lib/x86_64-linux/libncurses.so.5
+</code></pre></div></div>
+
+<p>Everything should work fine after doing this. Happy coding!</p>
+
+  </div>
+  
+  <div class="post">
+    <h1 class="post-title">
+      <a href="/blog/2018/04/14/hello-world/"> Hello World </a>
+    </h1>
+
+    <span class="post-date">14 Apr 2018</span>
+
+    <p><img src="http://localhost:4000/assets/hello-world.jpg" alt="Hello World!" /></p>
 
 <p>I have been thinking about blogging for a while. In fact, starting a blog was one of my goals for 2017. Problem was, I never could come up with something to write or so I thought. Perhaps the time just wasn’t right for it.</p>
 
@@ -157,22 +187,18 @@
 
 <p>Well, so much for a first rant. Let’s go!</p>
 
+  </div>
+  
 </div>
 
-<div class="related">
-  <h2>Related Posts</h2>
-  <ul class="related-posts">
-    
-      <li>
-        <h3>
-          <a href="/blog/2019/11/21/vscode-c-cpp-plugin-formatting-fails/">
-            VSCode C/C++ Plugin Formatting Fails
-            <small>21 Nov 2019</small>
-          </a>
-        </h3>
-      </li>
-    
-  </ul>
+<div class="pagination">
+  
+  <span class="pagination-item older">Older</span>
+   
+  <span class="pagination-item newer">Newer</span>
+  
+</div>
+
 </div>
 </div>
     </div>

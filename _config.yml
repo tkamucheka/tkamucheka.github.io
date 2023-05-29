@@ -4,21 +4,21 @@ highlighter:      rouge
 
 # Permalinks
 permalink:        pretty
-# relative_permalinks: true
 
 # Setup
 title:            Tendayi Kamucheka
-tagline:          'Software Engineer'
+tagline:          'PhD Student @ University of Arkansas'
 description:      ''
 url:              https://tkamucheka.github.io
 baseurl:          ''
-base_url:         /
+base_url:         ''
 
 author:
   name:           'Tendayi Kamucheka'
   url:            https://twitter.com/tkamucheka
 
 paginate:         5
+paginate_path:    /blog/page:num/
 
 # Custom vars
 quote:            ''

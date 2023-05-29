@@ -1,5 +1,5 @@
 <div class="sidebar">
-  <div class="container sidebar-stickys">
+  <div class="container">
     <div class="sidebar-about">
       <div id="photo-wrapper">
         <center>
@@ -17,27 +17,36 @@
           </div></h1>
         </center>
         <p class="sidebar-text text-center">
-          Software Engineer
+          PhD Student
         </p>
         <p class="sidebar-text text-center">
-          Nanjing, CN
+          University of Arkansas
+        </p>
+        <p class="sidebar-text text-center">
+          tfkamuch@uark.edu
+        </p>
+        <p class="sidebar-text text-center">
+          <a href="{{ site.baseurl }}assets/tkamucheka_resume.pdf" download>
+            Download Resume
+          </a>
         </p>
       </div>
     </div>
 
     <div class="sidebar-block">
       <nav class="sidebar-nav text-md-right">
-        <a class="sidebar-nav-item{% if page.url == site.base_url %} active{% endif %}" href="{{ site.base_url }}">Home</a>
+        <a class="sidebar-nav-item{% if page.url == site.base_url %} active{% endif %}" href="{{ site.baseurl }}">Home</a>
 
         {% comment %}
           The code below dynamically generates a sidebar nav of pages with
           `layout: page` in the front-matter. See readme for usage.
         {% endcomment %}
+        
 
         {% assign pages_list = site.pages %}
         {% for node in pages_list %}
           {% if node.title != null %}
-            {% if node.layout == "page" %}
+            {% if node.nav_link %}
               <a class="sidebar-nav-item{% if page.url == node.url %} active{% endif %}" href="{{ node.url }}">{{ node.title }}</a>
             {% endif %}
           {% endif %}
@@ -54,6 +63,9 @@
       </p>
     </div>
 
+  </div>
+
+  <div class="container sidebar-sticky">
     <p class="lead text-md-right">{{ site.quoted }}</p>
     <p class="text-md-right">&copy; {{ site.time | date: '%Y' }}. All rights reserved.</p>
   </div>
