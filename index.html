@@ -1,7 +1,8 @@
 ---
-layout: page
+layout: default
 title: Blog
-nav_link: true
+nav_link: false
+order: 0
 ---
 
 <div class="posts">
@@ -13,7 +14,7 @@ nav_link: true
 
     <span class="post-date">{{ post.date | date_to_string }}</span>
 
-    {{ post.content | markdownify }}
+    {{ post.excerpt  }}
   </div>
   {% endfor %}
 </div>

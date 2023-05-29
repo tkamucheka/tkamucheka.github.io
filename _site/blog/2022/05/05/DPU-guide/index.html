@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+  <link href="http://gmpg.org/xfn/11" rel="profile" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+
+  <!-- Enable responsiveness on mobile devices-->
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1"
+  />
+
+  <title>
+     Xilinx DPU Setup Guide &middot; Tendayi Kamucheka 
+  </title>
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="http://localhost:4000/public/css/poole.css" />
+  <link rel="stylesheet" href="http://localhost:4000/public/css/syntax.css" />
+  <link rel="stylesheet" href="http://localhost:4000/public/css/hyde.css" />
+  <link rel="stylesheet" href="http://localhost:4000/public/css/custom.css" />
+  <!-- <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=PT+Sans:400,400italic,700|Abril+Fatface"> -->
+
+  <!-- Icons -->
+  <link
+    rel="apple-touch-icon-precomposed"
+    sizes="144x144"
+    href="/public/apple-touch-icon-144-precomposed.png"
+  />
+  <link rel="shortcut icon" href="/public/favicon.ico" />
+
+  <!-- RSS -->
+  <link
+    rel="alternate"
+    type="application/rss+xml"
+    title="RSS"
+    href="/atom.xml"
+  />
+</head>
+
+
+  <body>
+    <div id="backdrop">
+      <div class="sidebar">
+  <div class="container">
+    <div class="sidebar-about">
+      <div id="photo-wrapper">
+        <center>
+          <div id="photo-circle">
+            <img id="photo" src="/public/images/profile.jpeg" />
+          </div>
+        </center>
+      </div>
+      <div class="sidebar-block">
+        <center>
+          <div id="big-name">
+            <span id="first-name">Tendayi</span>
+            <span id="dot-name">•</span>
+            <span id="last-name">Kamucheka</span>
+          </div></h1>
+        </center>
+        <p class="sidebar-text text-center">
+          PhD Student
+        </p>
+        <p class="sidebar-text text-center">
+          University of Arkansas
+        </p>
+        <p class="sidebar-text text-center">
+          tfkamuch@uark.edu
+        </p>
+        <p class="sidebar-text text-center">
+          <a href="assets/tkamucheka_resume.pdf" download>
+            Download Resume
+          </a>
+        </p>
+      </div>
+    </div>
+
+    <hr>
+
+    <div class="sidebar-block">
+      <nav class="sidebar-nav text-md-right">
+        <a class="sidebar-nav-item" href="http://localhost:4000/">Home</a>
+
+        
+        
+        
+        
+          
+            
+          
+        
+          
+        
+          
+            
+          
+        
+          
+            
+          
+        
+          
+            
+          
+        
+          
+            
+              <a class="sidebar-nav-item" href="/Experience/">Experience</a>
+            
+          
+        
+          
+            
+              <a class="sidebar-nav-item" href="/ResearchProjects/">Research Projects</a>
+            
+          
+        
+          
+            
+              <a class="sidebar-nav-item" href="/Publications/">Publications</a>
+            
+          
+        
+      </nav>
+    </div>
+
+    <hr>
+
+    <div class="sidebar-block">
+      <p class="sidebar-item text-md-right">
+        <a href="https://github.com/tkamucheka" target="_blank">Github</a>
+      </p>
+      <p class="sidebar-item text-md-right">
+        <a href="https://twitter.com/tkamucheka" target="_blank">Twitter</a>
+      </p>
+    </div>
+
+  </div>
+
+  <div class="container sidebar-sticky">
+    <p class="lead text-md-right"></p>
+    <p class="text-md-right">&copy; 2023. All rights reserved.</p>
+  </div>
+</div>
+
+      <div id="header-wrapper"></div>
+
+      <div class="content container"><div class="post">
+  <h1 class="post-title">Xilinx DPU Setup Guide</h1>
+  <span class="post-date">05 May 2022</span>
+  <p>The Xilinx setup tutorials demonstrate two paths to setting up the DPU. One route provides a pre-built PetaLinux system image with code examples, precompiled example binaries, and pre-trained models. The image can be flashed onto an SD card, and you should be able to boot the board directly from the SD card. Vivado and Vitis are not required. In fact, you can plug in a display and keyboard onto the ZCU104 board and use the board in standalone mode. It is also possible to SSH into the board over a network and interact with the board over SSH. More on that later. The other route, found <a href="https://docs.xilinx.com/r/en-US/pg338-dpu/Introduction?tocId=~72l0MosWV8p9MbkDlnw8Q">here</a>, shows how to start from a board design in Vivado and work your way up to Vitis and develop custom applications [1]. That is not a part of this guide; we will stick to the first option only for now.</p>
+
+<h2 id="getting-started">Getting Started</h2>
+<p>You will want to download a copy of the PetaLinux DPU system image from the below link. Select the link matching your board model, in my case, ZCU104.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>https://docs.xilinx.com/r/en-US/ug1414-vitis-ai/Flashing-the-OS-Image-to-the-SD-Card
+</code></pre></div></div>
+
+<p>You will also need <a href="https://www.balena.io/etcher/">BalenaEtcher</a> to flash the system image to your SD card. So make sure you have that installed on your system. After you have both the system image and Etcher, follow the steps shown on the same page you downloaded the system image to create your bootable SD card. In most cases, you do not have to extract the image from the compressed archive; Etcher will take care of that. However, if Etcher fails to complete the process or verify the flashed image, you may have to extract the archive first using your favorite archive manager like WinRAR.</p>
+
+<h2 id="booting-petalinux">Booting PetaLinux</h2>
+<p>Assuming you are not planning on using the board in standalone mode, there are a few things you will need to get right for this next part.</p>
+<ol>
+  <li>Ensure the Xilinx platform cable drivers are installed; otherwise, you will not see anything on the serial console. The cable drivers are installed along with Vivado when you run that installation.</li>
+  <li>Have Putty, TeraTerm, or whatever is your favorite serial console application installed and ready.</li>
+  <li>Configure the dip switches on the ZCU104 board to boot from the SD card.</li>
+</ol>
+
+<p>On Windows, with the USB cable connected between your board and computer, you can look at the Device Manager to see which new COM/Serial device appears when you power on the board. Two new devices should show up, and you may have to try both when you open a serial connection. Use the following configuration to open a serial link:</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Baudrate: 115200
+Data bits: 8
+Stop bits: 1
+Parity: None
+</code></pre></div></div>
+<p>Check this configuration if you see garbage on screen (in TeraTerm or whatever) when you boot the board.</p>
+
+<p>When you power on the board, you should see a light sequence that goes from red to green in the area near the SD card slot. If the light is not turning green, check either the dip switches and make sure they are set to boot from the SD card or something went wrong while flashing the SD card.</p>
+
+<p>You should see PetaLinux booting in your console window if everything went as expected. At the end of the boot sequence, the boot process will appear to be stuck. Just press any key, and the program will continue and drop down to a shell.</p>
+
+<h2 id="first-step">First Step</h2>
+<p>When your board is booting, the first thing you want to do is get the board connected to the network. Connect an Ethernet cable to the board and plug the other end into a switch or router on the same network as your computer.</p>
+
+<p>Once you’ve plugged the board onto the network, run <code class="language-plaintext highlighter-rouge">ip -h -f inet address</code> command to see the IP address assigned to <code class="language-plaintext highlighter-rouge">eth0</code> link on the board. You will need it to SSH into the board.</p>
+
+<h2 id="connecting-over-ssh">Connecting Over SSH</h2>
+<div class="language-sh highlighter-rouge"><div class="highlight"><pre class="highlight"><code>ssh root@<span class="o">{</span>ip_address<span class="o">}</span>
+</code></pre></div></div>
+<p>When you’re ready to SSH into the board, I recommend using <a href="https://mobaxterm.mobatek.net/">MobaXterm</a> because MobaXterm gives you an all-in-one environment that can handle the file transfer, SSH, and, best of all, an X session. There are two pitfalls you want to watch out for:</p>
+<ol>
+  <li>Using other terminal programs, SSH commands like <code class="language-plaintext highlighter-rouge">scp</code> for copying files between host and server will sometimes not work correctly. You know, you’ve run into this if you continuously get a ‘host not found error.’</li>
+  <li>You need to establish an X session to view the output of the DPU in some cases. For example, when the output is an image or video, you will not be able to see what the DPU is doing without an X session. MobaXterm will automatically open an X window to display images. Enable the X-Session forwarding option in MobaXterm to get this working.  If you see this error message, <code class="language-plaintext highlighter-rouge">Gtk-WARNING **: 04:15:35.330: cannot open display:</code>, make sure X-session forwarding is enabled and make sure you’re connected over SSH not UART.</li>
+</ol>
+
+<p>Once you have established a connection, you can move on to the next section and copy model inputs onto the board.</p>
+
+<h2 id="almost-there">Almost There</h2>
+<p>Now let’s copy the model inputs onto the board. This is the last step before we can actually run some examples. Back on the <a href="https://docs.xilinx.com/r/en-US/ug1414-vitis-ai/Running-Vitis-AI-Examples">Xilinx page</a>, under the ‘Running Vitis-AI Examples’ section, find a download link and download the examples archive. You can use <code class="language-plaintext highlighter-rouge">wget</code> to download the examples directly onto the board or use MobaXterm or FileZilla.</p>
+
+<p>Extract the examples archive into the VART directory.</p>
+<div class="language-sh highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">tar</span> <span class="nt">-xzvf</span> vitis_ai_runtime_r2.0.0_image_video.tar.gz <span class="nt">-C</span> ~/Vitis-AI/demo/VART
+</code></pre></div></div>
+
+<h2 id="running-examples">Running Examples</h2>
+<p>Xilinx documentation on the DPU lists all the available examples and how to run them. Below you will find all the examples and how to run them. All the example directories also contain source code which may be useful in crafting similar applications targeting the DPU.</p>
+
+<p><strong>Resnet50</strong></p>
+<div class="language-sh highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># root@xilinx-zcu104-2021_2:~#</span>
+<span class="nb">cd</span> /home/root/Vitis-AI/demo/VART/resnet50 ./resnet50 /usr/share/vitis_ai_library/models/resnet50/resnet50.xmodel
+
+<span class="c"># Output</span>
+
+</code></pre></div></div>
+
+<p><strong>Resnet50 Output:</strong></p>
+<div class="language-sh highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># root@xilinx-zcu104-2021_2:~#</span>
+WARNING: Logging before InitGoogleLogging<span class="o">()</span> is written to STDERR
+I0330 04:15:34.966986  1071 main.cc:292] create running <span class="k">for </span>subgraph: subgraph_conv1
+
+Image : 001.jpg
+top[0] prob <span class="o">=</span> 0.982662  name <span class="o">=</span> brain coral
+top[1] prob <span class="o">=</span> 0.008502  name <span class="o">=</span> coral reef
+top[2] prob <span class="o">=</span> 0.006621  name <span class="o">=</span> jackfruit, jak, jack
+top[3] prob <span class="o">=</span> 0.000543  name <span class="o">=</span> puffer, pufferfish, blowfish, globefish
+top[4] prob <span class="o">=</span> 0.000330  name <span class="o">=</span> eel
+</code></pre></div></div>
+
+<p>![[resnet50 output.png]]</p>
+
+<h3 id="other-examples">Other Examples</h3>
+
+<p><strong>Adas Detection</strong></p>
+<div class="language-sh highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># root@xilinx-zcu104-2021_2:~#</span>
+<span class="nb">cd</span> /home/root/Vitis-AI/demo/VART/adas_detection
+./adas_detection video/adas.webm /usr/share/vitis_ai_library/models/yolov3_adas_pruned_0_9/yolov3_adas_pruned_0_9.xmodel
+</code></pre></div></div>
+
+<p><strong>Inception</strong></p>
+<div class="language-sh highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># root@xilinx-zcu104-2021_2:~#</span>
+<span class="nb">cd</span> /home/root/Vitis-AI/demo/VART/inception_v1_mt_py
+python3 inception_v1.py 1 /usr/share/vitis_ai_library/models/inception_v1_tf/inception_v1_tf.xmodel
+</code></pre></div></div>
+
+<p><strong>Pose Detection</strong></p>
+<div class="language-sh highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># root@xilinx-zcu104-2021_2:~#</span>
+<span class="nb">cd</span> /home/root/Vitis-AI/demo/VART/pose_detection
+./pose_detection video/pose.webm /usr/share/vitis_ai_library/models/sp_net/sp_net.xmodel /usr/share/vitis_ai_library/models/ssd_pedestrian_pruned_0_97/ssd_pedestrian_pruned_0_97.xmodel
+</code></pre></div></div>
+
+<p><strong>Resnet50_mt_py</strong></p>
+<div class="language-sh highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># root@xilinx-zcu104-2021_2:~#</span>
+<span class="nb">cd</span> /home/root/Vitis-AI/demo/VART/resnet50_mt_py
+python3 resnet50.py 1 /usr/share/vitis_ai_library/models/resnet50/resnet50.xmodel
+</code></pre></div></div>
+
+<p><strong>Segmentation</strong></p>
+<div class="language-sh highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># root@xilinx-zcu104-2021_2:~#</span>
+<span class="nb">cd</span> /home/root/Vitis-AI/demo/VART/segmentation
+./segmentation video/traffic.webm /usr/share/vitis_ai_library/models/fpn/fpn.xmodel
+</code></pre></div></div>
+
+<p><strong>Squeezenet_pytorch</strong></p>
+<div class="language-sh highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># root@xilinx-zcu104-2021_2:~#</span>
+<span class="nb">cd</span> /home/root/Vitis-AI/demo/VART/squeezenet_pytorch
+./squeezenet_pytorch /usr/share/vitis_ai_library/models/squeezenet_pt/squeezenet_pt.xmodel
+</code></pre></div></div>
+
+<p><strong>Video Analysis</strong></p>
+<div class="language-sh highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># root@xilinx-zcu104-2021_2:~#</span>
+<span class="nb">cd</span> /home/root/Vitis-AI/demo/VART/video_analysis
+./video_analysis video/structure.webm /usr/share/vitis_ai_library/models/ssd_traffic_pruned_0_9/ssd_traffic_pruned_0_9.xmodel
+</code></pre></div></div>
+
+<h2 id="references">References</h2>
+<p>[1]. <a href="https://docs.xilinx.com/r/en-US/pg338-dpu/Introduction?tocId=~72l0MosWV8p9MbkDlnw8Q">Xilinx Design User Guide, PG338 DPU</a></p>
+
+
+</div>
+
+<div class="related">
+  <h2>Related Posts</h2>
+  <ul class="related-posts">
+    
+      <li>
+        <h3>
+          <a href="/blog/2019/11/21/vscode-c-cpp-plugin-formatting-fails/">
+            VSCode C/C++ Plugin Formatting Fails
+            <small>21 Nov 2019</small>
+          </a>
+        </h3>
+      </li>
+    
+      <li>
+        <h3>
+          <a href="/blog/2018/04/14/hello-world/">
+            Hello World
+            <small>14 Apr 2018</small>
+          </a>
+        </h3>
+      </li>
+    
+  </ul>
+</div>
+</div>
+    </div>
+  </body>
+</html>

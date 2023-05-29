@@ -1,6 +1,6 @@
 body {
-  background-color: #202020;
-  height: 100%
+  background-color: #fff;
+  height: 100vh
 }
 
 /* Common */
@@ -83,6 +83,7 @@ body {
 }
 
 .sidebar {
+  background-color: #202020;
   z-index: 8
 }
 
