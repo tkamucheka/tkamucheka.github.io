@@ -1,9 +1,8 @@
 ---
 layout: page
 title: Experience
-nav_link: true
+nav_link: false
 order: 2
 ---
 
-# Experience
-
+# Education

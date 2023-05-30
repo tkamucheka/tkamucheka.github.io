@@ -10,8 +10,7 @@ title:            Tendayi Kamucheka
 tagline:          'PhD Student @ University of Arkansas'
 description:      ''
 url:              https://tkamucheka.github.io
-baseurl:          ''
-base_url:         '/'
+baseurl:          '/'
 
 author:
   name:           'Tendayi Kamucheka'
