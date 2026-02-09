@@ -21,14 +21,14 @@ Initially, Ollama only initialized the 7700 XT. The 6600 was not picked up, desp
 
 ## What Actually Worked
 
-The fix was to set the per-GPU override form of the variable. In single-GPU setups the variable is just `HSA_OVERRIDE_GFX_VERSION`. For multi-GPU setups it becomes `HSA_OVERRIDE_GFX_VERSION_[GPU]`, where the GPU index is 1-based in my testing. With two devices, the correct mapping was:
+The fix was to set the per-GPU override form of the variable. In single-GPU setups the variable is just `HSA_OVERRIDE_GFX_VERSION`. For multi-GPU setups it becomes `HSA_OVERRIDE_GFX_VERSION_[GPU]`, where the GPU index is 1-based in my testing. One possible explanation is that the CPU may be counted as device 0, which would shift the GPU indices by one, but I have not verified this. With two devices, the correct mapping was:
 
 - `HSA_OVERRIDE_GFX_VERSION_1=11.0.1` for the RX 7700 XT (primary)
 - `HSA_OVERRIDE_GFX_VERSION_2=10.3.0` for the RX 6600
 
 This is the opposite of what I expected at first. Most ROCm device selection variables are 0-indexed (for example, `HIP_VISIBLE_DEVICES` and `ROCR_VISIBLE_DEVICES`). In my testing, `HSA_OVERRIDE_GFX_VERSION_%d` is 1-indexed. That distinction was the key to getting the second GPU online.
 
-Based on my findings, this text in the Ollama docs is inaccurate:
+Based on my findings, this text in the Ollama docs may be inaccurate:
 
 > If you have multiple GPUs with different GFX versions, append the numeric device number to the environment variable to set them individually. For example, HSA_OVERRIDE_GFX_VERSION_0=10.3.0 and HSA_OVERRIDE_GFX_VERSION_1=11.0.0
 
@@ -58,7 +58,8 @@ export HSA_OVERRIDE_GFX_VERSION_2=10.3.0
 
 The relevant signal in `rocm-smi` is the device list and VRAM usage. On a working setup, both devices should be visible and reported with non-zero VRAM percentages under load. Here is a trimmed example of the output, with the columns that matter:
 
-```
+```sh
+# rocm-smi
 Device  Node  IDs           ...  Power  ...  VRAM%  GPU%
 0       1     0x747e, 46094 ...  59.0W  ...  70%    1%
 1       2     0x73ff, 35521 ...  39.0W  ...  69%    43%
