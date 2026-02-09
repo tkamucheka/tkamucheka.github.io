@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+  <link href="http://gmpg.org/xfn/11" rel="profile" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+
+  <!-- Enable responsiveness on mobile devices-->
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1"
+  />
+
+  <title>
+     Running Ollama on Mixed AMD GPUs (RX 7700 XT + RX 6600) &middot; Tendayi Kamucheka 
+  </title>
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="http://localhost:4000/public/css/poole.css" />
+  <link rel="stylesheet" href="http://localhost:4000/public/css/syntax.css" />
+  <link rel="stylesheet" href="http://localhost:4000/public/css/hyde.css" />
+  <link rel="stylesheet" href="http://localhost:4000/public/css/custom.css" />
+  <!-- <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=PT+Sans:400,400italic,700|Abril+Fatface"> -->
+
+  <!-- Icons -->
+  <link
+    rel="apple-touch-icon-precomposed"
+    sizes="144x144"
+    href="public/apple-touch-icon-144-precomposed.png"
+  />
+  <link rel="shortcut icon" href="public/favicon.ico" />
+
+  <!-- RSS -->
+  <link
+    rel="alternate"
+    type="application/rss+xml"
+    title="RSS"
+    href="/atom.xml"
+  />
+</head>
+
+
+  <body>
+    <div id="backdrop">
+      <div class="sidebar">
+  <div class="container">
+    <div class="sidebar-about">
+      <div id="photo-wrapper">
+        <center>
+          <div id="photo-circle">
+            <img
+              id="photo"
+              src="http://localhost:4000/public/images/profile.jpeg"
+            />
+          </div>
+        </center>
+      </div>
+      <div class="sidebar-block">
+        <center>
+          <div id="big-name">
+            <span id="first-name">Tendayi</span>
+            <span id="dot-name">•</span>
+            <span id="last-name">Kamucheka</span>
+          </div>
+        </center>
+        <p class="sidebar-text text-center">Computer Engineering</p>
+        <p class="sidebar-text text-center">PhD Candidate</p>
+        <p class="sidebar-text text-center">University of Arkansas</p>
+        <p class="sidebar-text text-center">tfkamuch@uark.edu</p>
+        <p class="sidebar-text text-center">
+          <a href="http://localhost:4000/assets/tkamucheka_resume.pdf" download>
+            Download Resume
+          </a>
+        </p>
+      </div>
+    </div>
+
+    <hr />
+
+    <div class="sidebar-block">
+      <nav class="sidebar-nav text-md-right">
+        <a
+          class="sidebar-nav-item"
+          href="http://localhost:4000/"
+        >Home</a>
+
+         
+        
+         
+         
+           
+             
+           
+         
+           
+         
+           
+             
+           
+         
+           
+             
+           
+         
+           
+             
+           
+         
+           
+             
+           
+         
+           
+             
+           
+         
+           
+            
+        <a
+          class="sidebar-nav-item"
+          href="http://localhost:4000/Research/"
+          >Publications</a>
+             
+           
+         
+           
+             
+           
+        
+      </nav>
+    </div>
+
+    <hr />
+
+    <div class="sidebar-block">
+      <p class="sidebar-item text-md-right">
+        <a href="https://github.com/tkamucheka" target="_blank">Github</a>
+      </p>
+      <p class="sidebar-item text-md-right">
+        <a href="https://twitter.com/tkamucheka" target="_blank">Twitter</a>
+      </p>
+    </div>
+  </div>
+
+  <div class="container sidebar-sticky">
+    <p class="lead text-md-right"></p>
+    <p class="text-md-right">
+      &copy; 2026. All rights reserved.
+    </p>
+  </div>
+</div>
+
+      <div id="header-wrapper"></div>
+
+      <div class="content container"><div class="post">
+  <h1 class="post-title">Running Ollama on Mixed AMD GPUs (RX 7700 XT + RX 6600)</h1>
+  <span class="post-date">08 Feb 2026</span>
+  <p>Lately I have been looking for more ways to integrate LLMs and agents into my workflow. Outside of the code I actually want to write, I am often faced with tasks I would categorize as laborious chores. This feels like a good fit for agents but I have also been thinking about privacy when using commercial offerings, so I have been exploring locally hosted small models.</p>
+
+<p>This post documents how I got Ollama working on a system with two different AMD GPUs: an RX 7700 XT (supported) and an RX 6600 (nominally unsupported). The key detail is how <code class="language-plaintext highlighter-rouge">HSA_OVERRIDE_GFX_VERSION_%d</code>, being 1-indexed, behaves with multiple devices, and how that differs from other ROCm-related environment variables.</p>
+
+<h2 id="hardware-and-symptoms">Hardware and Symptoms</h2>
+
+<p>I run two GPUs in the same host:</p>
+
+<ul>
+  <li>RX 7700 XT</li>
+  <li>RX 6600</li>
+</ul>
+
+<p>Initially, Ollama only initialized the 7700 XT. The 6600 was not picked up, despite ROCm being installed and functional for the primary GPU. I found a number of guides explaining how to override the GFX version for the RX 6600, but they assumed a single GPU. I needed to handle two different GPUs at once, with different GFX versions.</p>
+
+<h2 id="what-actually-worked">What Actually Worked</h2>
+
+<p>The fix was to set the per-GPU override form of the variable. In single-GPU setups the variable is just <code class="language-plaintext highlighter-rouge">HSA_OVERRIDE_GFX_VERSION</code>. For multi-GPU setups it becomes <code class="language-plaintext highlighter-rouge">HSA_OVERRIDE_GFX_VERSION_[GPU]</code>, where the GPU index is 1-based in my testing. With two devices, the correct mapping was:</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">HSA_OVERRIDE_GFX_VERSION_1=11.0.1</code> for the RX 7700 XT (primary)</li>
+  <li><code class="language-plaintext highlighter-rouge">HSA_OVERRIDE_GFX_VERSION_2=10.3.0</code> for the RX 6600</li>
+</ul>
+
+<p>This is the opposite of what I expected at first. Most ROCm device selection variables are 0-indexed (for example, <code class="language-plaintext highlighter-rouge">HIP_VISIBLE_DEVICES</code> and <code class="language-plaintext highlighter-rouge">ROCR_VISIBLE_DEVICES</code>). In my testing, <code class="language-plaintext highlighter-rouge">HSA_OVERRIDE_GFX_VERSION_%d</code> is 1-indexed. That distinction was the key to getting the second GPU online.</p>
+
+<p>Based on my findings, this text in the Ollama docs is inaccurate:</p>
+
+<blockquote>
+  <p>If you have multiple GPUs with different GFX versions, append the numeric device number to the environment variable to set them individually. For example, HSA_OVERRIDE_GFX_VERSION_0=10.3.0 and HSA_OVERRIDE_GFX_VERSION_1=11.0.0</p>
+</blockquote>
+
+<p>I did not need to set <code class="language-plaintext highlighter-rouge">HIP_VISIBLE_DEVICES</code> or <code class="language-plaintext highlighter-rouge">ROCR_VISIBLE_DEVICES</code> for this configuration.</p>
+
+<h2 id="service-and-shell-configuration">Service and Shell Configuration</h2>
+
+<p>For systemd, I set the variables in an Ollama drop-in using <code class="language-plaintext highlighter-rouge">systemctl edit ollama.service</code>:</p>
+
+<div class="language-ini highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nn">[Service]</span><span class="w">
+</span><span class="py">Environment</span><span class="p">=</span><span class="s">"OLLAMA_HOST=0.0.0.0"</span>
+<span class="py">Environment</span><span class="p">=</span><span class="s">"OLLAMA_ORIGINS=*"</span>
+<span class="py">Environment</span><span class="p">=</span><span class="s">"HSA_OVERRIDE_GFX_VERSION_1=11.0.1"</span><span class="w"> </span><span class="c"># RX 7700 XT
+</span><span class="s">Environment="HSA_OVERRIDE_GFX_VERSION_2=10.3.0" # RX 6000</span>
+</code></pre></div></div>
+
+<p>For interactive shells, I used the same overrides in my profile:</p>
+
+<div class="language-sh highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># ROCm</span>
+<span class="nb">export </span><span class="nv">HSA_OVERRIDE_GFX_VERSION_1</span><span class="o">=</span>11.0.1
+<span class="nb">export </span><span class="nv">HSA_OVERRIDE_GFX_VERSION_2</span><span class="o">=</span>10.3.0
+</code></pre></div></div>
+
+<h2 id="validating-both-gpus-are-active">Validating Both GPUs Are Active</h2>
+
+<p>The relevant signal in <code class="language-plaintext highlighter-rouge">rocm-smi</code> is the device list and VRAM usage. On a working setup, both devices should be visible and reported with non-zero VRAM percentages under load. Here is a trimmed example of the output, with the columns that matter:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Device  Node  IDs           ...  Power  ...  VRAM%  GPU%
+0       1     0x747e, 46094 ...  59.0W  ...  70%    1%
+1       2     0x73ff, 35521 ...  39.0W  ...  69%    43%
+</code></pre></div></div>
+
+<h2 id="sources">Sources</h2>
+
+<p>One comment on Ollama’s Github suggested that <code class="language-plaintext highlighter-rouge">HSA_OVERRIDE_GFX_VERSION_%d</code> was the variable to look at but was not implemented. I tried it anyway and stumbled on the correct setting. The discussion was still useful for surfacing the variable and led to the right documentation.</p>
+
+<p>A concise RX 6600 ROCm guide was also helpful for narrowing down the supported GFX versions and testing overrides. I used these references for context and verification:</p>
+
+<ul>
+  <li><a href="https://gist.github.com/furaar/ee05a5ef673302a8e653863b6eaedc90">AMD ROCm Installation Guide on RX6600 + Ollama</a></li>
+  <li><a href="https://major.io/p/ollama-with-amd-radeon-6600xt/">Running Ollama with an AMD Radeon 6600 XT</a></li>
+  <li><a href="https://github.com/ollama/ollama/issues/8473">HSA_OVERRIDE_GFX_VERSION_0 while running on only one GPU #8473</a></li>
+</ul>
+
+<h2 id="takeaway">Takeaway</h2>
+
+<p>Multi-GPU on Linux with AMD GPUs and ROCm is achievable, even when one device is an RX 6600 that is not yet officially supported. The key enabler in my setup was correctly applying per-device GFX overrides so both GPUs would initialize under Ollama. Next, I plan to integrate my Ollama backend with <a href="https://github.com/ThePrimeagen/99">99.nvim</a>. It is still in alpha, but I already like its different approach to AI-assisted coding.</p>
+
+</div>
+
+<div class="related">
+  <h2>Related Posts</h2>
+  <ul class="related-posts">
+    
+      <li>
+        <h3>
+          <a href="/2025/12/15/vivado-clock-propagation-to-custom-ip/">
+            Propagating Clock Frequency from Vivado IPI to Custom AXI IP
+            <small>15 Dec 2025</small>
+          </a>
+        </h3>
+      </li>
+    
+      <li>
+        <h3>
+          <a href="/blog/2024/05/03/fccm-2024/">
+            FCCM 2024
+            <small>03 May 2024</small>
+          </a>
+        </h3>
+      </li>
+    
+      <li>
+        <h3>
+          <a href="/blog/2022/05/05/DPU-guide/">
+            Xilinx DPU Setup Guide
+            <small>05 May 2022</small>
+          </a>
+        </h3>
+      </li>
+    
+  </ul>
+</div>
+</div>
+    </div>
+  </body>
+</html>

@@ -4,13 +4,468 @@
  <title>Tendayi Kamucheka</title>
  <link href="http://localhost:4000/atom.xml" rel="self"/>
  <link href="http://localhost:4000/"/>
- <updated>2023-05-29T11:59:52-05:00</updated>
+ <updated>2026-02-08T21:26:03-06:00</updated>
  <id>http://localhost:4000</id>
  <author>
    <name>Tendayi Kamucheka</name>
    <email></email>
  </author>
 
+ 
+ <entry>
+   <title>Ollama Dual Rocm Gpu</title>
+   <link href="http://localhost:4000/2026/02/08/ollama-dual-rocm-gpu/"/>
+   <updated>2026-02-08T00:00:00-06:00</updated>
+   <id>http://localhost:4000/2026/02/08/ollama-dual-rocm-gpu</id>
+   <content type="html">&lt;h1 id=&quot;running-ollama-on-mixed-amd-amd-gpus-rx-7700-xt--rx-6600&quot;&gt;Running Ollama on Mixed AMD AMD GPUs (RX 7700 XT + RX 6600)&lt;/h1&gt;
+
+&lt;p&gt;Lately I have been looking for more ways to integrate LLMs and agents into my workflow. Outside of the code I actually want to write, I am often faced with tasks I would categorize as laborious chores. This feels like a good fit for agents. I have also been thinking about privacy when using commercial offerings, so I have been exploring locally hosted small models.&lt;/p&gt;
+
+&lt;p&gt;This post documents how I got Ollama working on a system with two different AMD GPUs: an RX 7700 XT (supported) and an RX 6600 (nominally unsupported). The key detail is how &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;HSA_OVERRIDE_GFX_VERSION_%d&lt;/code&gt;, being 1-indexed, behaves with multiple devices, and how that differs from other ROCm-related environment variables.&lt;/p&gt;
+
+&lt;h2 id=&quot;hardware-and-symptoms&quot;&gt;Hardware and Symptoms&lt;/h2&gt;
+
+&lt;p&gt;I run two GPUs in the same host:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;RX 7700 XT&lt;/li&gt;
+  &lt;li&gt;RX 6600&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Initially, Ollama only initialized the 7700 XT. The 6600 was not picked up, despite ROCm being installed and functional for the primary GPU. I found a number of guides explaining how to override the GFX version for the RX 6600, but they assumed a single GPU. I needed to handle two different GPUs at once, with different GFX versions.&lt;/p&gt;
+
+&lt;h2 id=&quot;what-actually-worked&quot;&gt;What Actually Worked&lt;/h2&gt;
+
+&lt;p&gt;The fix was to set the per-GPU override form of the variable. In single-GPU setups the variable is just &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;HSA_OVERRIDE_GFX_VERSION&lt;/code&gt;. For multi-GPU setups it becomes &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;HSA_OVERRIDE_GFX_VERSION_[GPU]&lt;/code&gt;, where the GPU index is 1-based in my testing. With two devices, the correct mapping was:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;HSA_OVERRIDE_GFX_VERSION_1=11.0.1&lt;/code&gt; for the RX 7700 XT (primary)&lt;/li&gt;
+  &lt;li&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;HSA_OVERRIDE_GFX_VERSION_2=10.3.0&lt;/code&gt; for the RX 6600&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;This is the opposite of what I expected at first. Most ROCm device selection variables are 0-indexed (for example, &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;HIP_VISIBLE_DEVICES&lt;/code&gt; and &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;ROCR_VISIBLE_DEVICES&lt;/code&gt;). In my testing, &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;HSA_OVERRIDE_GFX_VERSION_%d&lt;/code&gt; is 1-indexed. That distinction was the key to getting the second GPU online.&lt;/p&gt;
+
+&lt;p&gt;Based on my findings, this text in the Ollama docs is inaccurate:&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;If you have multiple GPUs with different GFX versions, append the numeric device number to the environment variable to set them individually. For example, HSA_OVERRIDE_GFX_VERSION_0=10.3.0 and HSA_OVERRIDE_GFX_VERSION_1=11.0.0&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;I did not need to set &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;HIP_VISIBLE_DEVICES&lt;/code&gt; or &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;ROCR_VISIBLE_DEVICES&lt;/code&gt; for this configuration.&lt;/p&gt;
+
+&lt;h2 id=&quot;service-and-shell-configuration&quot;&gt;Service and Shell Configuration&lt;/h2&gt;
+
+&lt;p&gt;For systemd, I set the variables in an Ollama drop-in using &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;systemctl edit ollama.service&lt;/code&gt;:&lt;/p&gt;
+
+&lt;div class=&quot;language-ini highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nn&quot;&gt;[Service]&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
+&lt;/span&gt;&lt;span class=&quot;py&quot;&gt;Environment&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;OLLAMA_HOST=0.0.0.0&quot;&lt;/span&gt;
+&lt;span class=&quot;py&quot;&gt;Environment&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;OLLAMA_ORIGINS=*&quot;&lt;/span&gt;
+&lt;span class=&quot;py&quot;&gt;Environment&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;HSA_OVERRIDE_GFX_VERSION_1=11.0.1&quot;&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;c&quot;&gt;# RX 7700 XT
+&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;Environment=&quot;HSA_OVERRIDE_GFX_VERSION_2=10.3.0&quot; # RX 6000&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;For interactive shells, I used the same overrides in my profile:&lt;/p&gt;
+
+&lt;div class=&quot;language-sh highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c&quot;&gt;# ROCm&lt;/span&gt;
+&lt;span class=&quot;nb&quot;&gt;export &lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;HSA_OVERRIDE_GFX_VERSION_1&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;11.0.1
+&lt;span class=&quot;nb&quot;&gt;export &lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;HSA_OVERRIDE_GFX_VERSION_2&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;10.3.0
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h2 id=&quot;validating-both-gpus-are-active&quot;&gt;Validating Both GPUs Are Active&lt;/h2&gt;
+
+&lt;p&gt;The relevant signal in &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;rocm-smi&lt;/code&gt; is the device list and VRAM usage. On a working setup, both devices should be visible and reported with non-zero VRAM percentages under load. Here is a trimmed example of the output, with the columns that matter:&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;Device  Node  IDs           ...  Power  ...  VRAM%  GPU%
+0       1     0x747e, 46094 ...  59.0W  ...  70%    1%
+1       2     0x73ff, 35521 ...  39.0W  ...  69%    43%
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h2 id=&quot;sources&quot;&gt;Sources&lt;/h2&gt;
+
+&lt;p&gt;One comment on Ollama’s Github suggested that &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;HSA_OVERRIDE_GFX_VERSION_%d&lt;/code&gt; was the variable to look at but was not implemented. I tried it anyway and stumbled on the correct setting. The discussion was still useful for surfacing the variable and led to the right documentation.&lt;/p&gt;
+
+&lt;p&gt;A concise RX 6600 ROCm guide was also helpful for narrowing down the supported GFX versions and testing overrides. I used these references for context and verification:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;a href=&quot;https://gist.github.com/furaar/ee05a5ef673302a8e653863b6eaedc90&quot;&gt;AMD ROCm Installation Guide on RX6600 + Ollama&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://major.io/p/ollama-with-amd-radeon-6600xt/&quot;&gt;Running Ollama with an AMD Radeon 6600 XT&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://github.com/ollama/ollama/issues/8473&quot;&gt;HSA_OVERRIDE_GFX_VERSION_0 while running on only one GPU #8473&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&quot;takeaway&quot;&gt;Takeaway&lt;/h2&gt;
+
+&lt;p&gt;Multi-GPU on Linux with AMD GPUs and ROCm is achievable, even when one device is an RX 6600 that is not yet officially supported. The key enabler in my setup was correctly applying per-device GFX overrides so both GPUs would initialize under Ollama. Next, I plan to integrate my Ollama backend with &lt;a href=&quot;https://github.com/ThePrimeagen/99&quot;&gt;99.nvim&lt;/a&gt;. It is still in alpha, but I already like its different approach to AI-assisted coding.&lt;/p&gt;
+</content>
+ </entry>
+ 
+ <entry>
+   <title>Vivado Clock Propagation To Custom Ip</title>
+   <link href="http://localhost:4000/2025/12/15/vivado-clock-propagation-to-custom-ip/"/>
+   <updated>2025-12-15T00:00:00-06:00</updated>
+   <id>http://localhost:4000/2025/12/15/vivado-clock-propagation-to-custom-ip</id>
+   <content type="html">&lt;h1 id=&quot;propagating-clock-frequency-from-vivado-ipi-to-custom-axi-ip&quot;&gt;Propagating Clock Frequency from Vivado IPI to Custom AXI IP&lt;/h1&gt;
+
+&lt;h2 id=&quot;the-problem&quot;&gt;The Problem&lt;/h2&gt;
+
+&lt;p&gt;When creating custom AXI IP cores in Vivado, you often need to know the operating frequency of the clock signal. While Vivado’s IP Integrator (IPI) automatically propagates clock frequencies between connected components, getting that frequency value into your custom IP’s parameters requires specific configuration.&lt;/p&gt;
+
+&lt;p&gt;Without proper setup, you’ll find that:&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;The clock frequency parameter shows a default value (e.g., 100 MHz) regardless of the actual clock source&lt;/li&gt;
+  &lt;li&gt;Changing the clock source in your block design doesn’t update your IP’s frequency parameter&lt;/li&gt;
+  &lt;li&gt;Your IP can’t adapt its timing or behavior based on the actual clock frequency&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&quot;the-solution&quot;&gt;The Solution&lt;/h2&gt;
+
+&lt;p&gt;The solution involves three key steps:&lt;/p&gt;
+&lt;ol&gt;
+  &lt;li&gt;Making your frequency parameter user-editable and propagate-able&lt;/li&gt;
+  &lt;li&gt;Creating a bidirectional link between the clock interface and your parameter&lt;/li&gt;
+  &lt;li&gt;Implementing propagation logic in the block design TCL scripts&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;Let’s walk through each step.&lt;/p&gt;
+
+&lt;h2 id=&quot;step-1-configure-the-user-parameter&quot;&gt;Step 1: Configure the User Parameter&lt;/h2&gt;
+
+&lt;p&gt;First, ensure your frequency parameter in &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;component.xml&lt;/code&gt; is set up correctly. The parameter must be user-resolvable and enabled:&lt;/p&gt;
+
+&lt;div class=&quot;language-xml highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nt&quot;&gt;&amp;lt;spirit:parameter&amp;gt;&lt;/span&gt;
+  &lt;span class=&quot;nt&quot;&gt;&amp;lt;spirit:name&amp;gt;&lt;/span&gt;FREQ_HZ&lt;span class=&quot;nt&quot;&gt;&amp;lt;/spirit:name&amp;gt;&lt;/span&gt;
+  &lt;span class=&quot;nt&quot;&gt;&amp;lt;spirit:displayName&amp;gt;&lt;/span&gt;Frequency (Hz)&lt;span class=&quot;nt&quot;&gt;&amp;lt;/spirit:displayName&amp;gt;&lt;/span&gt;
+  &lt;span class=&quot;nt&quot;&gt;&amp;lt;spirit:value&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;spirit:format=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;long&quot;&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;spirit:resolve=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;user&quot;&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;spirit:id=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;PARAM_VALUE.FREQ_HZ&quot;&lt;/span&gt;&lt;span class=&quot;nt&quot;&gt;&amp;gt;&lt;/span&gt;100000000&lt;span class=&quot;nt&quot;&gt;&amp;lt;/spirit:value&amp;gt;&lt;/span&gt;
+  &lt;span class=&quot;nt&quot;&gt;&amp;lt;spirit:vendorExtensions&amp;gt;&lt;/span&gt;
+    &lt;span class=&quot;nt&quot;&gt;&amp;lt;xilinx:parameterInfo&amp;gt;&lt;/span&gt;
+      &lt;span class=&quot;nt&quot;&gt;&amp;lt;xilinx:enablement&amp;gt;&lt;/span&gt;
+        &lt;span class=&quot;nt&quot;&gt;&amp;lt;xilinx:isEnabled&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;xilinx:resolve=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;user&quot;&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;xilinx:id=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;PARAM_ENABLEMENT.FREQ_HZ&quot;&lt;/span&gt;&lt;span class=&quot;nt&quot;&gt;&amp;gt;&lt;/span&gt;true&lt;span class=&quot;nt&quot;&gt;&amp;lt;/xilinx:isEnabled&amp;gt;&lt;/span&gt;
+      &lt;span class=&quot;nt&quot;&gt;&amp;lt;/xilinx:enablement&amp;gt;&lt;/span&gt;
+    &lt;span class=&quot;nt&quot;&gt;&amp;lt;/xilinx:parameterInfo&amp;gt;&lt;/span&gt;
+  &lt;span class=&quot;nt&quot;&gt;&amp;lt;/spirit:vendorExtensions&amp;gt;&lt;/span&gt;
+&lt;span class=&quot;nt&quot;&gt;&amp;lt;/spirit:parameter&amp;gt;&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;&lt;strong&gt;Key points:&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;spirit:resolve=&quot;user&quot;&lt;/code&gt; - Allows the parameter to be modified by propagation scripts&lt;/li&gt;
+  &lt;li&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;isEnabled = true&lt;/code&gt; - Makes the parameter editable in the GUI&lt;/li&gt;
+  &lt;li&gt;Default value of &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;100000000&lt;/code&gt; (100 MHz) provides a sensible fallback&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;strong&gt;Common mistake:&lt;/strong&gt; Setting &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;spirit:resolve=&quot;generated&quot;&lt;/code&gt; or &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;isEnabled = false&lt;/code&gt; will prevent the parameter from being updated, even if your propagation scripts are correct.&lt;/p&gt;
+
+&lt;h2 id=&quot;step-2-link-clock-interface-to-parameter&quot;&gt;Step 2: Link Clock Interface to Parameter&lt;/h2&gt;
+
+&lt;p&gt;The critical step is creating a dependency between your clock bus interface’s FREQ_HZ and your user parameter. Find the clock bus interface definition in &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;component.xml&lt;/code&gt; (typically named &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;S_AXI_CLK&lt;/code&gt; or similar):&lt;/p&gt;
+
+&lt;div class=&quot;language-xml highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nt&quot;&gt;&amp;lt;spirit:busInterface&amp;gt;&lt;/span&gt;
+  &lt;span class=&quot;nt&quot;&gt;&amp;lt;spirit:name&amp;gt;&lt;/span&gt;S_AXI_CLK&lt;span class=&quot;nt&quot;&gt;&amp;lt;/spirit:name&amp;gt;&lt;/span&gt;
+  &lt;span class=&quot;nt&quot;&gt;&amp;lt;spirit:busType&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;spirit:vendor=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;xilinx.com&quot;&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;spirit:library=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;signal&quot;&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;spirit:name=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;clock&quot;&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;spirit:version=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;1.0&quot;&lt;/span&gt;&lt;span class=&quot;nt&quot;&gt;/&amp;gt;&lt;/span&gt;
+  &lt;span class=&quot;nt&quot;&gt;&amp;lt;spirit:abstractionType&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;spirit:vendor=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;xilinx.com&quot;&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;spirit:library=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;signal&quot;&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;spirit:name=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;clock_rtl&quot;&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;spirit:version=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;1.0&quot;&lt;/span&gt;&lt;span class=&quot;nt&quot;&gt;/&amp;gt;&lt;/span&gt;
+  &lt;span class=&quot;nt&quot;&gt;&amp;lt;spirit:slave/&amp;gt;&lt;/span&gt;
+  &lt;span class=&quot;nt&quot;&gt;&amp;lt;spirit:portMaps&amp;gt;&lt;/span&gt;
+    &lt;span class=&quot;nt&quot;&gt;&amp;lt;spirit:portMap&amp;gt;&lt;/span&gt;
+      &lt;span class=&quot;nt&quot;&gt;&amp;lt;spirit:logicalPort&amp;gt;&lt;/span&gt;
+        &lt;span class=&quot;nt&quot;&gt;&amp;lt;spirit:name&amp;gt;&lt;/span&gt;CLK&lt;span class=&quot;nt&quot;&gt;&amp;lt;/spirit:name&amp;gt;&lt;/span&gt;
+      &lt;span class=&quot;nt&quot;&gt;&amp;lt;/spirit:logicalPort&amp;gt;&lt;/span&gt;
+      &lt;span class=&quot;nt&quot;&gt;&amp;lt;spirit:physicalPort&amp;gt;&lt;/span&gt;
+        &lt;span class=&quot;nt&quot;&gt;&amp;lt;spirit:name&amp;gt;&lt;/span&gt;s_axi_aclk&lt;span class=&quot;nt&quot;&gt;&amp;lt;/spirit:name&amp;gt;&lt;/span&gt;
+      &lt;span class=&quot;nt&quot;&gt;&amp;lt;/spirit:physicalPort&amp;gt;&lt;/span&gt;
+    &lt;span class=&quot;nt&quot;&gt;&amp;lt;/spirit:portMap&amp;gt;&lt;/span&gt;
+  &lt;span class=&quot;nt&quot;&gt;&amp;lt;/spirit:portMaps&amp;gt;&lt;/span&gt;
+  &lt;span class=&quot;nt&quot;&gt;&amp;lt;spirit:parameters&amp;gt;&lt;/span&gt;
+    &lt;span class=&quot;nt&quot;&gt;&amp;lt;spirit:parameter&amp;gt;&lt;/span&gt;
+      &lt;span class=&quot;nt&quot;&gt;&amp;lt;spirit:name&amp;gt;&lt;/span&gt;ASSOCIATED_BUSIF&lt;span class=&quot;nt&quot;&gt;&amp;lt;/spirit:name&amp;gt;&lt;/span&gt;
+      &lt;span class=&quot;nt&quot;&gt;&amp;lt;spirit:value&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;spirit:id=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;BUSIFPARAM_VALUE.S_AXI_CLK.ASSOCIATED_BUSIF&quot;&lt;/span&gt;&lt;span class=&quot;nt&quot;&gt;&amp;gt;&lt;/span&gt;S_AXI&lt;span class=&quot;nt&quot;&gt;&amp;lt;/spirit:value&amp;gt;&lt;/span&gt;
+    &lt;span class=&quot;nt&quot;&gt;&amp;lt;/spirit:parameter&amp;gt;&lt;/span&gt;
+    &lt;span class=&quot;nt&quot;&gt;&amp;lt;spirit:parameter&amp;gt;&lt;/span&gt;
+      &lt;span class=&quot;nt&quot;&gt;&amp;lt;spirit:name&amp;gt;&lt;/span&gt;ASSOCIATED_RESET&lt;span class=&quot;nt&quot;&gt;&amp;lt;/spirit:name&amp;gt;&lt;/span&gt;
+      &lt;span class=&quot;nt&quot;&gt;&amp;lt;spirit:value&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;spirit:id=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;BUSIFPARAM_VALUE.S_AXI_CLK.ASSOCIATED_RESET&quot;&lt;/span&gt;&lt;span class=&quot;nt&quot;&gt;&amp;gt;&lt;/span&gt;s_axi_aresetn&lt;span class=&quot;nt&quot;&gt;&amp;lt;/spirit:value&amp;gt;&lt;/span&gt;
+    &lt;span class=&quot;nt&quot;&gt;&amp;lt;/spirit:parameter&amp;gt;&lt;/span&gt;
+    &lt;span class=&quot;nt&quot;&gt;&amp;lt;spirit:parameter&amp;gt;&lt;/span&gt;
+      &lt;span class=&quot;nt&quot;&gt;&amp;lt;spirit:name&amp;gt;&lt;/span&gt;FREQ_TOLERANCE_HZ&lt;span class=&quot;nt&quot;&gt;&amp;lt;/spirit:name&amp;gt;&lt;/span&gt;
+      &lt;span class=&quot;nt&quot;&gt;&amp;lt;spirit:value&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;spirit:id=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;BUSIFPARAM_VALUE.S_AXI_CLK.FREQ_TOLERANCE_HZ&quot;&lt;/span&gt;&lt;span class=&quot;nt&quot;&gt;&amp;gt;&lt;/span&gt;-1&lt;span class=&quot;nt&quot;&gt;&amp;lt;/spirit:value&amp;gt;&lt;/span&gt;
+    &lt;span class=&quot;nt&quot;&gt;&amp;lt;/spirit:parameter&amp;gt;&lt;/span&gt;
+    &lt;span class=&quot;nt&quot;&gt;&amp;lt;spirit:parameter&amp;gt;&lt;/span&gt;
+      &lt;span class=&quot;nt&quot;&gt;&amp;lt;spirit:name&amp;gt;&lt;/span&gt;FREQ_HZ&lt;span class=&quot;nt&quot;&gt;&amp;lt;/spirit:name&amp;gt;&lt;/span&gt;
+      &lt;span class=&quot;nt&quot;&gt;&amp;lt;spirit:value&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;spirit:format=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;long&quot;&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;spirit:resolve=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;user&quot;&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;spirit:id=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;BUSIFPARAM_VALUE.S_AXI_CLK.FREQ_HZ&quot;&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;spirit:dependency=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;(spirit:decode(id(&apos;PARAM_VALUE.FREQ_HZ&apos;)) * 1)&quot;&lt;/span&gt;&lt;span class=&quot;nt&quot;&gt;&amp;gt;&lt;/span&gt;100000000&lt;span class=&quot;nt&quot;&gt;&amp;lt;/spirit:value&amp;gt;&lt;/span&gt;
+    &lt;span class=&quot;nt&quot;&gt;&amp;lt;/spirit:parameter&amp;gt;&lt;/span&gt;
+  &lt;span class=&quot;nt&quot;&gt;&amp;lt;/spirit:parameters&amp;gt;&lt;/span&gt;
+&lt;span class=&quot;nt&quot;&gt;&amp;lt;/spirit:busInterface&amp;gt;&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;&lt;strong&gt;The magic ingredient:&lt;/strong&gt; The &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;spirit:dependency&lt;/code&gt; attribute:&lt;/p&gt;
+
+&lt;div class=&quot;language-xml highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;spirit:dependency=&quot;(spirit:decode(id(&apos;PARAM_VALUE.FREQ_HZ&apos;)) * 1)&quot;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;This expression creates a bidirectional relationship:&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;When the clock source changes in IPI → the bus interface FREQ_HZ updates → your PARAM_VALUE.FREQ_HZ updates&lt;/li&gt;
+  &lt;li&gt;When you manually change PARAM_VALUE.FREQ_HZ → the bus interface FREQ_HZ updates&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;The &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;* 1&lt;/code&gt; operation forces evaluation of the expression as an integer value.&lt;/p&gt;
+
+&lt;h2 id=&quot;step-3-enable-parameter-propagation-in-bdtcl&quot;&gt;Step 3: Enable Parameter Propagation in bd.tcl&lt;/h2&gt;
+
+&lt;p&gt;In your &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;bd/bd.tcl&lt;/code&gt; file, you need to mark the parameter as propagate-overrideable. Add this to the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;init&lt;/code&gt; procedure:&lt;/p&gt;
+
+&lt;div class=&quot;language-tcl highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;proc init &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; cellpath otherInfo &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+  # Allow this parameter to be overwritten by the propagate function
+  set ip_handle &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;get_bd_cells $cellpath&lt;span class=&quot;p&quot;&gt;]&lt;/span&gt;
+  bd::mark_propagate_overrideable $ip_handle &lt;span class=&quot;s2&quot;&gt;&quot;FREQ_HZ&quot;&lt;/span&gt;
+  
+  # ... rest of init code
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;This tells Vivado that the FREQ_HZ parameter should be updated when properties propagate through the block design.&lt;/p&gt;
+
+&lt;h2 id=&quot;step-4-add-gui-parameter-mapping-xgui&quot;&gt;Step 4: Add GUI Parameter Mapping (xgui)&lt;/h2&gt;
+
+&lt;p&gt;In your &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;xgui/YOURIP_v1_0.tcl&lt;/code&gt; file, ensure you have the update procedure for the model parameter:&lt;/p&gt;
+
+&lt;div class=&quot;language-tcl highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;proc update_MODELPARAM_VALUE.FREQ_HZ &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; MODELPARAM_VALUE.FREQ_HZ PARAM_VALUE.FREQ_HZ IPINST &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+  # Procedure called to set VHDL generic/Verilog parameter value&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;s&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; based on TCL parameter value
+  set_property value &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;get_property value $&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;PARAM_VALUE.FREQ_HZ&lt;span class=&quot;p&quot;&gt;}]&lt;/span&gt; $&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;MODELPARAM_VALUE.FREQ_HZ&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;This ensures the GUI parameter value gets passed to your Verilog/VHDL module as a parameter.&lt;/p&gt;
+
+&lt;h2 id=&quot;how-it-works&quot;&gt;How It Works&lt;/h2&gt;
+
+&lt;p&gt;Here’s the complete flow when you connect a clock in IPI:&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;&lt;strong&gt;Clock Connection&lt;/strong&gt;: You connect a clock source (e.g., processing system at 88.8 MHz) to your IP’s clock input&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;Vivado Propagation&lt;/strong&gt;: IPI’s propagation engine runs and updates the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;S_AXI_CLK&lt;/code&gt; interface’s FREQ_HZ&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;Dependency Evaluation&lt;/strong&gt;: The &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;spirit:dependency&lt;/code&gt; expression is evaluated, linking the interface FREQ_HZ to PARAM_VALUE.FREQ_HZ&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;Parameter Update&lt;/strong&gt;: Your custom FREQ_HZ parameter is updated to 88.8 MHz&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;Hardware Generation&lt;/strong&gt;: The new frequency value is passed to your RTL module as a parameter&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;h2 id=&quot;testing-the-configuration&quot;&gt;Testing the Configuration&lt;/h2&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;&lt;strong&gt;Add your IP to a block design&lt;/strong&gt; in Vivado IPI&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;Connect a clock source&lt;/strong&gt; with a known frequency (e.g., ZYNQ processing_system7 FCLK_CLK0)&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;Check the IP configuration&lt;/strong&gt; - Right-click your IP and select “Customize”&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;Verify the FREQ_HZ parameter&lt;/strong&gt; matches the connected clock frequency&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;If it doesn’t update:&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;Check that &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;spirit:resolve=&quot;user&quot;&lt;/code&gt; and &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;isEnabled = true&lt;/code&gt; in component.xml&lt;/li&gt;
+  &lt;li&gt;Verify the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;spirit:dependency&lt;/code&gt; attribute is correctly formatted&lt;/li&gt;
+  &lt;li&gt;Ensure &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;bd::mark_propagate_overrideable&lt;/code&gt; is called in bd.tcl init&lt;/li&gt;
+  &lt;li&gt;Try refreshing the IP catalog and upgrading the IP in your block design&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&quot;common-pitfalls&quot;&gt;Common Pitfalls&lt;/h2&gt;
+
+&lt;h3 id=&quot;pitfall-1-parameter-set-to-generated&quot;&gt;Pitfall 1: Parameter Set to “generated”&lt;/h3&gt;
+&lt;div class=&quot;language-xml highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c&quot;&gt;&amp;lt;!-- WRONG --&amp;gt;&lt;/span&gt;
+&lt;span class=&quot;nt&quot;&gt;&amp;lt;spirit:value&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;spirit:resolve=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;generated&quot;&lt;/span&gt; &lt;span class=&quot;err&quot;&gt;...&lt;/span&gt;&lt;span class=&quot;nt&quot;&gt;&amp;gt;&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;This prevents user and script modifications.&lt;/p&gt;
+
+&lt;h3 id=&quot;pitfall-2-missing-dependency-link&quot;&gt;Pitfall 2: Missing Dependency Link&lt;/h3&gt;
+&lt;p&gt;Without the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;spirit:dependency&lt;/code&gt; attribute, there’s no connection between the clock interface and your parameter.&lt;/p&gt;
+
+&lt;h3 id=&quot;pitfall-3-trying-to-read-from-pin-or-net-in-post_propagate&quot;&gt;Pitfall 3: Trying to Read from Pin or Net in post_propagate&lt;/h3&gt;
+&lt;p&gt;Attempting to read frequency from pins or nets in &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;post_propagate&lt;/code&gt; is unreliable:&lt;/p&gt;
+&lt;div class=&quot;language-tcl highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c&quot;&gt;# DON&apos;T DO THIS - unreliable
+&lt;/span&gt;set freq &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;get_property CONFIG.FREQ_HZ &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;get_bd_pins &lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;$cellpath&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;/s_axi_aclk&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]]&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;The dependency approach is more robust and follows Vivado’s intended design flow.&lt;/p&gt;
+
+&lt;h3 id=&quot;pitfall-4-forgetting-to-upgrade-ip&quot;&gt;Pitfall 4: Forgetting to Upgrade IP&lt;/h3&gt;
+&lt;p&gt;After modifying component.xml, you must:&lt;/p&gt;
+&lt;ol&gt;
+  &lt;li&gt;Refresh the IP catalog (Tools → Report → Refresh IP Catalog)&lt;/li&gt;
+  &lt;li&gt;Upgrade the IP in your block design (Right-click → Upgrade IP)&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;h2 id=&quot;use-cases&quot;&gt;Use Cases&lt;/h2&gt;
+
+&lt;p&gt;This technique is valuable for:&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;&lt;strong&gt;Timing-critical logic&lt;/strong&gt;: Adapting timeout counters or state machine delays based on actual clock frequency&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;Baud rate generators&lt;/strong&gt;: Calculating divider values for UART or other serial protocols&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;Performance monitoring&lt;/strong&gt;: Reporting throughput in real-world units (MB/s instead of cycles)&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;Clock domain crossing&lt;/strong&gt;: Validating frequency relationships between multiple clocks&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;Power estimation&lt;/strong&gt;: Providing accurate frequency information to power analysis tools&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&quot;complete-example-structure&quot;&gt;Complete Example Structure&lt;/h2&gt;
+
+&lt;p&gt;Your IP should have these key files properly configured:&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;your_ip_1_0/
+├── component.xml              # Parameter definitions with dependencies
+├── bd/
+│   └── bd.tcl                 # mark_propagate_overrideable in init
+├── xgui/
+│   └── your_ip_v1_0.tcl      # update_MODELPARAM_VALUE procedures
+└── hdl/
+    └── your_ip.v              # Module with FREQ_HZ parameter
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h2 id=&quot;conclusion&quot;&gt;Conclusion&lt;/h2&gt;
+
+&lt;p&gt;Propagating clock frequencies from Vivado IPI to custom IP parameters requires careful coordination between component.xml, bd.tcl, and xgui TCL scripts. The key insight is using the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;spirit:dependency&lt;/code&gt; attribute to create a bidirectional link between the clock interface’s FREQ_HZ and your user parameter.&lt;/p&gt;
+
+&lt;p&gt;This approach is more robust than attempting to read frequency values from pins or nets in propagation scripts, as it leverages Vivado’s built-in parameter dependency evaluation system.&lt;/p&gt;
+
+&lt;p&gt;Once configured correctly, your IP will automatically update its frequency parameter whenever the clock source changes, enabling adaptive timing and performance-aware behavior in your hardware designs.&lt;/p&gt;
+</content>
+ </entry>
+ 
+ <entry>
+   <title>FCCM 2024</title>
+   <link href="http://localhost:4000/blog/2024/05/03/fccm-2024/"/>
+   <updated>2024-05-03T00:00:00-05:00</updated>
+   <id>http://localhost:4000/blog/2024/05/03/fccm-2024</id>
+   <content type="html">&lt;p&gt;&lt;img src=&quot;http://localhost:4000/assets/fccm2024_poster.svg&quot; alt=&quot;FCCM2024&quot; /&gt;&lt;/p&gt;
+</content>
+ </entry>
+ 
+ <entry>
+   <title>Xilinx DPU Setup Guide</title>
+   <link href="http://localhost:4000/blog/2022/05/05/DPU-guide/"/>
+   <updated>2022-05-05T00:00:00-05:00</updated>
+   <id>http://localhost:4000/blog/2022/05/05/DPU-guide</id>
+   <content type="html">&lt;p&gt;The Xilinx setup tutorials demonstrate two paths to setting up the DPU. One route provides a pre-built PetaLinux system image with code examples, precompiled example binaries, and pre-trained models. The image can be flashed onto an SD card, and you should be able to boot the board directly from the SD card. Vivado and Vitis are not required. In fact, you can plug in a display and keyboard onto the ZCU104 board and use the board in standalone mode. It is also possible to SSH into the board over a network and interact with the board over SSH. More on that later. The other route, found &lt;a href=&quot;https://docs.xilinx.com/r/en-US/pg338-dpu/Introduction?tocId=~72l0MosWV8p9MbkDlnw8Q&quot;&gt;here&lt;/a&gt;, shows how to start from a board design in Vivado and work your way up to Vitis and develop custom applications [1]. That is not a part of this guide; we will stick to the first option only for now.&lt;/p&gt;
+
+&lt;h2 id=&quot;getting-started&quot;&gt;Getting Started&lt;/h2&gt;
+&lt;p&gt;You will want to download a copy of the PetaLinux DPU system image from the below link. Select the link matching your board model, in my case, ZCU104.&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;https://docs.xilinx.com/r/en-US/ug1414-vitis-ai/Flashing-the-OS-Image-to-the-SD-Card
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;You will also need &lt;a href=&quot;https://www.balena.io/etcher/&quot;&gt;BalenaEtcher&lt;/a&gt; to flash the system image to your SD card. So make sure you have that installed on your system. After you have both the system image and Etcher, follow the steps shown on the same page you downloaded the system image to create your bootable SD card. In most cases, you do not have to extract the image from the compressed archive; Etcher will take care of that. However, if Etcher fails to complete the process or verify the flashed image, you may have to extract the archive first using your favorite archive manager like WinRAR.&lt;/p&gt;
+
+&lt;h2 id=&quot;booting-petalinux&quot;&gt;Booting PetaLinux&lt;/h2&gt;
+&lt;p&gt;Assuming you are not planning on using the board in standalone mode, there are a few things you will need to get right for this next part.&lt;/p&gt;
+&lt;ol&gt;
+  &lt;li&gt;Ensure the Xilinx platform cable drivers are installed; otherwise, you will not see anything on the serial console. The cable drivers are installed along with Vivado when you run that installation.&lt;/li&gt;
+  &lt;li&gt;Have Putty, TeraTerm, or whatever is your favorite serial console application installed and ready.&lt;/li&gt;
+  &lt;li&gt;Configure the dip switches on the ZCU104 board to boot from the SD card.&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;On Windows, with the USB cable connected between your board and computer, you can look at the Device Manager to see which new COM/Serial device appears when you power on the board. Two new devices should show up, and you may have to try both when you open a serial connection. Use the following configuration to open a serial link:&lt;/p&gt;
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;Baudrate: 115200
+Data bits: 8
+Stop bits: 1
+Parity: None
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;Check this configuration if you see garbage on screen (in TeraTerm or whatever) when you boot the board.&lt;/p&gt;
+
+&lt;p&gt;When you power on the board, you should see a light sequence that goes from red to green in the area near the SD card slot. If the light is not turning green, check either the dip switches and make sure they are set to boot from the SD card or something went wrong while flashing the SD card.&lt;/p&gt;
+
+&lt;p&gt;You should see PetaLinux booting in your console window if everything went as expected. At the end of the boot sequence, the boot process will appear to be stuck. Just press any key, and the program will continue and drop down to a shell.&lt;/p&gt;
+
+&lt;h2 id=&quot;first-step&quot;&gt;First Step&lt;/h2&gt;
+&lt;p&gt;When your board is booting, the first thing you want to do is get the board connected to the network. Connect an Ethernet cable to the board and plug the other end into a switch or router on the same network as your computer.&lt;/p&gt;
+
+&lt;p&gt;Once you’ve plugged the board onto the network, run &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;ip -h -f inet address&lt;/code&gt; command to see the IP address assigned to &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;eth0&lt;/code&gt; link on the board. You will need it to SSH into the board.&lt;/p&gt;
+
+&lt;h2 id=&quot;connecting-over-ssh&quot;&gt;Connecting Over SSH&lt;/h2&gt;
+&lt;div class=&quot;language-sh highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;ssh root@&lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;ip_address&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;When you’re ready to SSH into the board, I recommend using &lt;a href=&quot;https://mobaxterm.mobatek.net/&quot;&gt;MobaXterm&lt;/a&gt; because MobaXterm gives you an all-in-one environment that can handle the file transfer, SSH, and, best of all, an X session. There are two pitfalls you want to watch out for:&lt;/p&gt;
+&lt;ol&gt;
+  &lt;li&gt;Using other terminal programs, SSH commands like &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;scp&lt;/code&gt; for copying files between host and server will sometimes not work correctly. You know, you’ve run into this if you continuously get a ‘host not found error.’&lt;/li&gt;
+  &lt;li&gt;You need to establish an X session to view the output of the DPU in some cases. For example, when the output is an image or video, you will not be able to see what the DPU is doing without an X session. MobaXterm will automatically open an X window to display images. Enable the X-Session forwarding option in MobaXterm to get this working.  If you see this error message, &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;Gtk-WARNING **: 04:15:35.330: cannot open display:&lt;/code&gt;, make sure X-session forwarding is enabled and make sure you’re connected over SSH not UART.&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;Once you have established a connection, you can move on to the next section and copy model inputs onto the board.&lt;/p&gt;
+
+&lt;h2 id=&quot;almost-there&quot;&gt;Almost There&lt;/h2&gt;
+&lt;p&gt;Now let’s copy the model inputs onto the board. This is the last step before we can actually run some examples. Back on the &lt;a href=&quot;https://docs.xilinx.com/r/en-US/ug1414-vitis-ai/Running-Vitis-AI-Examples&quot;&gt;Xilinx page&lt;/a&gt;, under the ‘Running Vitis-AI Examples’ section, find a download link and download the examples archive. You can use &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;wget&lt;/code&gt; to download the examples directly onto the board or use MobaXterm or FileZilla.&lt;/p&gt;
+
+&lt;p&gt;Extract the examples archive into the VART directory.&lt;/p&gt;
+&lt;div class=&quot;language-sh highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nb&quot;&gt;tar&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-xzvf&lt;/span&gt; vitis_ai_runtime_r2.0.0_image_video.tar.gz &lt;span class=&quot;nt&quot;&gt;-C&lt;/span&gt; ~/Vitis-AI/demo/VART
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h2 id=&quot;running-examples&quot;&gt;Running Examples&lt;/h2&gt;
+&lt;p&gt;Xilinx documentation on the DPU lists all the available examples and how to run them. Below you will find all the examples and how to run them. All the example directories also contain source code which may be useful in crafting similar applications targeting the DPU.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Resnet50&lt;/strong&gt;&lt;/p&gt;
+&lt;div class=&quot;language-sh highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c&quot;&gt;# root@xilinx-zcu104-2021_2:~#&lt;/span&gt;
+&lt;span class=&quot;nb&quot;&gt;cd&lt;/span&gt; /home/root/Vitis-AI/demo/VART/resnet50 ./resnet50 /usr/share/vitis_ai_library/models/resnet50/resnet50.xmodel
+
+&lt;span class=&quot;c&quot;&gt;# Output&lt;/span&gt;
+
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;&lt;strong&gt;Resnet50 Output:&lt;/strong&gt;&lt;/p&gt;
+&lt;div class=&quot;language-sh highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c&quot;&gt;# root@xilinx-zcu104-2021_2:~#&lt;/span&gt;
+WARNING: Logging before InitGoogleLogging&lt;span class=&quot;o&quot;&gt;()&lt;/span&gt; is written to STDERR
+I0330 04:15:34.966986  1071 main.cc:292] create running &lt;span class=&quot;k&quot;&gt;for &lt;/span&gt;subgraph: subgraph_conv1
+
+Image : 001.jpg
+top[0] prob &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; 0.982662  name &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; brain coral
+top[1] prob &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; 0.008502  name &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; coral reef
+top[2] prob &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; 0.006621  name &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; jackfruit, jak, jack
+top[3] prob &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; 0.000543  name &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; puffer, pufferfish, blowfish, globefish
+top[4] prob &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; 0.000330  name &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; eel
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;![[resnet50 output.png]]&lt;/p&gt;
+
+&lt;h3 id=&quot;other-examples&quot;&gt;Other Examples&lt;/h3&gt;
+
+&lt;p&gt;&lt;strong&gt;Adas Detection&lt;/strong&gt;&lt;/p&gt;
+&lt;div class=&quot;language-sh highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c&quot;&gt;# root@xilinx-zcu104-2021_2:~#&lt;/span&gt;
+&lt;span class=&quot;nb&quot;&gt;cd&lt;/span&gt; /home/root/Vitis-AI/demo/VART/adas_detection
+./adas_detection video/adas.webm /usr/share/vitis_ai_library/models/yolov3_adas_pruned_0_9/yolov3_adas_pruned_0_9.xmodel
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;&lt;strong&gt;Inception&lt;/strong&gt;&lt;/p&gt;
+&lt;div class=&quot;language-sh highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c&quot;&gt;# root@xilinx-zcu104-2021_2:~#&lt;/span&gt;
+&lt;span class=&quot;nb&quot;&gt;cd&lt;/span&gt; /home/root/Vitis-AI/demo/VART/inception_v1_mt_py
+python3 inception_v1.py 1 /usr/share/vitis_ai_library/models/inception_v1_tf/inception_v1_tf.xmodel
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;&lt;strong&gt;Pose Detection&lt;/strong&gt;&lt;/p&gt;
+&lt;div class=&quot;language-sh highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c&quot;&gt;# root@xilinx-zcu104-2021_2:~#&lt;/span&gt;
+&lt;span class=&quot;nb&quot;&gt;cd&lt;/span&gt; /home/root/Vitis-AI/demo/VART/pose_detection
+./pose_detection video/pose.webm /usr/share/vitis_ai_library/models/sp_net/sp_net.xmodel /usr/share/vitis_ai_library/models/ssd_pedestrian_pruned_0_97/ssd_pedestrian_pruned_0_97.xmodel
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;&lt;strong&gt;Resnet50_mt_py&lt;/strong&gt;&lt;/p&gt;
+&lt;div class=&quot;language-sh highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c&quot;&gt;# root@xilinx-zcu104-2021_2:~#&lt;/span&gt;
+&lt;span class=&quot;nb&quot;&gt;cd&lt;/span&gt; /home/root/Vitis-AI/demo/VART/resnet50_mt_py
+python3 resnet50.py 1 /usr/share/vitis_ai_library/models/resnet50/resnet50.xmodel
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;&lt;strong&gt;Segmentation&lt;/strong&gt;&lt;/p&gt;
+&lt;div class=&quot;language-sh highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c&quot;&gt;# root@xilinx-zcu104-2021_2:~#&lt;/span&gt;
+&lt;span class=&quot;nb&quot;&gt;cd&lt;/span&gt; /home/root/Vitis-AI/demo/VART/segmentation
+./segmentation video/traffic.webm /usr/share/vitis_ai_library/models/fpn/fpn.xmodel
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;&lt;strong&gt;Squeezenet_pytorch&lt;/strong&gt;&lt;/p&gt;
+&lt;div class=&quot;language-sh highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c&quot;&gt;# root@xilinx-zcu104-2021_2:~#&lt;/span&gt;
+&lt;span class=&quot;nb&quot;&gt;cd&lt;/span&gt; /home/root/Vitis-AI/demo/VART/squeezenet_pytorch
+./squeezenet_pytorch /usr/share/vitis_ai_library/models/squeezenet_pt/squeezenet_pt.xmodel
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;&lt;strong&gt;Video Analysis&lt;/strong&gt;&lt;/p&gt;
+&lt;div class=&quot;language-sh highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c&quot;&gt;# root@xilinx-zcu104-2021_2:~#&lt;/span&gt;
+&lt;span class=&quot;nb&quot;&gt;cd&lt;/span&gt; /home/root/Vitis-AI/demo/VART/video_analysis
+./video_analysis video/structure.webm /usr/share/vitis_ai_library/models/ssd_traffic_pruned_0_9/ssd_traffic_pruned_0_9.xmodel
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h2 id=&quot;references&quot;&gt;References&lt;/h2&gt;
+&lt;p&gt;[1]. &lt;a href=&quot;https://docs.xilinx.com/r/en-US/pg338-dpu/Introduction?tocId=~72l0MosWV8p9MbkDlnw8Q&quot;&gt;Xilinx Design User Guide, PG338 DPU&lt;/a&gt;&lt;/p&gt;
+
+</content>
+ </entry>
  
  <entry>
    <title>VSCode C/C++ Plugin Formatting Fails</title>

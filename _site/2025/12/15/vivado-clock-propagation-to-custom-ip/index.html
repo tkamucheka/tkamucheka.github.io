@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+  <link href="http://gmpg.org/xfn/11" rel="profile" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+
+  <!-- Enable responsiveness on mobile devices-->
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1"
+  />
+
+  <title>
+     Propagating Clock Frequency from Vivado IPI to Custom AXI IP &middot; Tendayi Kamucheka 
+  </title>
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="http://localhost:4000/public/css/poole.css" />
+  <link rel="stylesheet" href="http://localhost:4000/public/css/syntax.css" />
+  <link rel="stylesheet" href="http://localhost:4000/public/css/hyde.css" />
+  <link rel="stylesheet" href="http://localhost:4000/public/css/custom.css" />
+  <!-- <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=PT+Sans:400,400italic,700|Abril+Fatface"> -->
+
+  <!-- Icons -->
+  <link
+    rel="apple-touch-icon-precomposed"
+    sizes="144x144"
+    href="public/apple-touch-icon-144-precomposed.png"
+  />
+  <link rel="shortcut icon" href="public/favicon.ico" />
+
+  <!-- RSS -->
+  <link
+    rel="alternate"
+    type="application/rss+xml"
+    title="RSS"
+    href="/atom.xml"
+  />
+</head>
+
+
+  <body>
+    <div id="backdrop">
+      <div class="sidebar">
+  <div class="container">
+    <div class="sidebar-about">
+      <div id="photo-wrapper">
+        <center>
+          <div id="photo-circle">
+            <img
+              id="photo"
+              src="http://localhost:4000/public/images/profile.jpeg"
+            />
+          </div>
+        </center>
+      </div>
+      <div class="sidebar-block">
+        <center>
+          <div id="big-name">
+            <span id="first-name">Tendayi</span>
+            <span id="dot-name">•</span>
+            <span id="last-name">Kamucheka</span>
+          </div>
+        </center>
+        <p class="sidebar-text text-center">Computer Engineering</p>
+        <p class="sidebar-text text-center">PhD Candidate</p>
+        <p class="sidebar-text text-center">University of Arkansas</p>
+        <p class="sidebar-text text-center">tfkamuch@uark.edu</p>
+        <p class="sidebar-text text-center">
+          <a href="http://localhost:4000/assets/tkamucheka_resume.pdf" download>
+            Download Resume
+          </a>
+        </p>
+      </div>
+    </div>
+
+    <hr />
+
+    <div class="sidebar-block">
+      <nav class="sidebar-nav text-md-right">
+        <a
+          class="sidebar-nav-item"
+          href="http://localhost:4000/"
+        >Home</a>
+
+         
+        
+         
+         
+           
+             
+           
+         
+           
+         
+           
+             
+           
+         
+           
+             
+           
+         
+           
+             
+           
+         
+           
+             
+           
+         
+           
+             
+           
+         
+           
+            
+        <a
+          class="sidebar-nav-item"
+          href="http://localhost:4000/Research/"
+          >Publications</a>
+             
+           
+         
+           
+             
+           
+        
+      </nav>
+    </div>
+
+    <hr />
+
+    <div class="sidebar-block">
+      <p class="sidebar-item text-md-right">
+        <a href="https://github.com/tkamucheka" target="_blank">Github</a>
+      </p>
+      <p class="sidebar-item text-md-right">
+        <a href="https://twitter.com/tkamucheka" target="_blank">Twitter</a>
+      </p>
+    </div>
+  </div>
+
+  <div class="container sidebar-sticky">
+    <p class="lead text-md-right"></p>
+    <p class="text-md-right">
+      &copy; 2026. All rights reserved.
+    </p>
+  </div>
+</div>
+
+      <div id="header-wrapper"></div>
+
+      <div class="content container"><div class="post">
+  <h1 class="post-title">Propagating Clock Frequency from Vivado IPI to Custom AXI IP</h1>
+  <span class="post-date">15 Dec 2025</span>
+  <p>When creating custom AXI IP cores in Vivado, you often need to know the operating frequency of the clock signal. While Vivado’s IP Integrator (IPI) automatically propagates clock frequencies between connected components, getting that frequency value into your custom IP’s parameters requires specific configuration.</p>
+
+<p>Without proper setup, you’ll find that:</p>
+<ul>
+  <li>The clock frequency parameter shows a default value (e.g., 100 MHz) regardless of the actual clock source</li>
+  <li>Changing the clock source in your block design doesn’t update your IP’s frequency parameter</li>
+  <li>Your IP can’t adapt its timing or behavior based on the actual clock frequency</li>
+</ul>
+
+<h2 id="the-solution">The Solution</h2>
+
+<p>The solution involves three key steps:</p>
+<ol>
+  <li>Making your frequency parameter user-editable and propagate-able</li>
+  <li>Creating a bidirectional link between the clock interface and your parameter</li>
+  <li>Implementing propagation logic in the block design TCL scripts</li>
+</ol>
+
+<p>Let’s walk through each step.</p>
+
+<h2 id="step-1-configure-the-user-parameter">Step 1: Configure the User Parameter</h2>
+
+<p>First, ensure your frequency parameter in <code class="language-plaintext highlighter-rouge">component.xml</code> is set up correctly. The parameter must be user-resolvable and enabled:</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;spirit:parameter&gt;</span>
+  <span class="nt">&lt;spirit:name&gt;</span>FREQ_HZ<span class="nt">&lt;/spirit:name&gt;</span>
+  <span class="nt">&lt;spirit:displayName&gt;</span>Frequency (Hz)<span class="nt">&lt;/spirit:displayName&gt;</span>
+  <span class="nt">&lt;spirit:value</span> <span class="na">spirit:format=</span><span class="s">"long"</span> <span class="na">spirit:resolve=</span><span class="s">"user"</span> <span class="na">spirit:id=</span><span class="s">"PARAM_VALUE.FREQ_HZ"</span><span class="nt">&gt;</span>100000000<span class="nt">&lt;/spirit:value&gt;</span>
+  <span class="nt">&lt;spirit:vendorExtensions&gt;</span>
+    <span class="nt">&lt;xilinx:parameterInfo&gt;</span>
+      <span class="nt">&lt;xilinx:enablement&gt;</span>
+        <span class="nt">&lt;xilinx:isEnabled</span> <span class="na">xilinx:resolve=</span><span class="s">"user"</span> <span class="na">xilinx:id=</span><span class="s">"PARAM_ENABLEMENT.FREQ_HZ"</span><span class="nt">&gt;</span>true<span class="nt">&lt;/xilinx:isEnabled&gt;</span>
+      <span class="nt">&lt;/xilinx:enablement&gt;</span>
+    <span class="nt">&lt;/xilinx:parameterInfo&gt;</span>
+  <span class="nt">&lt;/spirit:vendorExtensions&gt;</span>
+<span class="nt">&lt;/spirit:parameter&gt;</span>
+</code></pre></div></div>
+
+<p><strong>Key points:</strong></p>
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">spirit:resolve="user"</code> - Allows the parameter to be modified by propagation scripts</li>
+  <li><code class="language-plaintext highlighter-rouge">isEnabled = true</code> - Makes the parameter editable in the GUI</li>
+  <li>Default value of <code class="language-plaintext highlighter-rouge">100000000</code> (100 MHz) provides a sensible fallback</li>
+</ul>
+
+<p><strong>Common mistake:</strong> Setting <code class="language-plaintext highlighter-rouge">spirit:resolve="generated"</code> or <code class="language-plaintext highlighter-rouge">isEnabled = false</code> will prevent the parameter from being updated, even if your propagation scripts are correct.</p>
+
+<h2 id="step-2-link-clock-interface-to-parameter">Step 2: Link Clock Interface to Parameter</h2>
+
+<p>The critical step is creating a dependency between your clock bus interface’s FREQ_HZ and your user parameter. Find the clock bus interface definition in <code class="language-plaintext highlighter-rouge">component.xml</code> (typically named <code class="language-plaintext highlighter-rouge">S_AXI_CLK</code> or similar):</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;spirit:busInterface&gt;</span>
+  <span class="nt">&lt;spirit:name&gt;</span>S_AXI_CLK<span class="nt">&lt;/spirit:name&gt;</span>
+  <span class="nt">&lt;spirit:busType</span> <span class="na">spirit:vendor=</span><span class="s">"xilinx.com"</span> <span class="na">spirit:library=</span><span class="s">"signal"</span> <span class="na">spirit:name=</span><span class="s">"clock"</span> <span class="na">spirit:version=</span><span class="s">"1.0"</span><span class="nt">/&gt;</span>
+  <span class="nt">&lt;spirit:abstractionType</span> <span class="na">spirit:vendor=</span><span class="s">"xilinx.com"</span> <span class="na">spirit:library=</span><span class="s">"signal"</span> <span class="na">spirit:name=</span><span class="s">"clock_rtl"</span> <span class="na">spirit:version=</span><span class="s">"1.0"</span><span class="nt">/&gt;</span>
+  <span class="nt">&lt;spirit:slave/&gt;</span>
+  <span class="nt">&lt;spirit:portMaps&gt;</span>
+    <span class="nt">&lt;spirit:portMap&gt;</span>
+      <span class="nt">&lt;spirit:logicalPort&gt;</span>
+        <span class="nt">&lt;spirit:name&gt;</span>CLK<span class="nt">&lt;/spirit:name&gt;</span>
+      <span class="nt">&lt;/spirit:logicalPort&gt;</span>
+      <span class="nt">&lt;spirit:physicalPort&gt;</span>
+        <span class="nt">&lt;spirit:name&gt;</span>s_axi_aclk<span class="nt">&lt;/spirit:name&gt;</span>
+      <span class="nt">&lt;/spirit:physicalPort&gt;</span>
+    <span class="nt">&lt;/spirit:portMap&gt;</span>
+  <span class="nt">&lt;/spirit:portMaps&gt;</span>
+  <span class="nt">&lt;spirit:parameters&gt;</span>
+    <span class="nt">&lt;spirit:parameter&gt;</span>
+      <span class="nt">&lt;spirit:name&gt;</span>ASSOCIATED_BUSIF<span class="nt">&lt;/spirit:name&gt;</span>
+      <span class="nt">&lt;spirit:value</span> <span class="na">spirit:id=</span><span class="s">"BUSIFPARAM_VALUE.S_AXI_CLK.ASSOCIATED_BUSIF"</span><span class="nt">&gt;</span>S_AXI<span class="nt">&lt;/spirit:value&gt;</span>
+    <span class="nt">&lt;/spirit:parameter&gt;</span>
+    <span class="nt">&lt;spirit:parameter&gt;</span>
+      <span class="nt">&lt;spirit:name&gt;</span>ASSOCIATED_RESET<span class="nt">&lt;/spirit:name&gt;</span>
+      <span class="nt">&lt;spirit:value</span> <span class="na">spirit:id=</span><span class="s">"BUSIFPARAM_VALUE.S_AXI_CLK.ASSOCIATED_RESET"</span><span class="nt">&gt;</span>s_axi_aresetn<span class="nt">&lt;/spirit:value&gt;</span>
+    <span class="nt">&lt;/spirit:parameter&gt;</span>
+    <span class="nt">&lt;spirit:parameter&gt;</span>
+      <span class="nt">&lt;spirit:name&gt;</span>FREQ_TOLERANCE_HZ<span class="nt">&lt;/spirit:name&gt;</span>
+      <span class="nt">&lt;spirit:value</span> <span class="na">spirit:id=</span><span class="s">"BUSIFPARAM_VALUE.S_AXI_CLK.FREQ_TOLERANCE_HZ"</span><span class="nt">&gt;</span>-1<span class="nt">&lt;/spirit:value&gt;</span>
+    <span class="nt">&lt;/spirit:parameter&gt;</span>
+    <span class="nt">&lt;spirit:parameter&gt;</span>
+      <span class="nt">&lt;spirit:name&gt;</span>FREQ_HZ<span class="nt">&lt;/spirit:name&gt;</span>
+      <span class="nt">&lt;spirit:value</span> <span class="na">spirit:format=</span><span class="s">"long"</span> <span class="na">spirit:resolve=</span><span class="s">"user"</span> <span class="na">spirit:id=</span><span class="s">"BUSIFPARAM_VALUE.S_AXI_CLK.FREQ_HZ"</span> <span class="na">spirit:dependency=</span><span class="s">"(spirit:decode(id('PARAM_VALUE.FREQ_HZ')) * 1)"</span><span class="nt">&gt;</span>100000000<span class="nt">&lt;/spirit:value&gt;</span>
+    <span class="nt">&lt;/spirit:parameter&gt;</span>
+  <span class="nt">&lt;/spirit:parameters&gt;</span>
+<span class="nt">&lt;/spirit:busInterface&gt;</span>
+</code></pre></div></div>
+
+<p><strong>The magic ingredient:</strong> The <code class="language-plaintext highlighter-rouge">spirit:dependency</code> attribute:</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>spirit:dependency="(spirit:decode(id('PARAM_VALUE.FREQ_HZ')) * 1)"
+</code></pre></div></div>
+
+<p>This expression creates a bidirectional relationship:</p>
+<ul>
+  <li>When the clock source changes in IPI → the bus interface FREQ_HZ updates → your PARAM_VALUE.FREQ_HZ updates</li>
+  <li>When you manually change PARAM_VALUE.FREQ_HZ → the bus interface FREQ_HZ updates</li>
+</ul>
+
+<p>The <code class="language-plaintext highlighter-rouge">* 1</code> operation forces evaluation of the expression as an integer value.</p>
+
+<h2 id="step-3-enable-parameter-propagation-in-bdtcl">Step 3: Enable Parameter Propagation in bd.tcl</h2>
+
+<p>In your <code class="language-plaintext highlighter-rouge">bd/bd.tcl</code> file, you need to mark the parameter as propagate-overrideable. Add this to the <code class="language-plaintext highlighter-rouge">init</code> procedure:</p>
+
+<div class="language-tcl highlighter-rouge"><div class="highlight"><pre class="highlight"><code>proc init <span class="p">{</span> cellpath otherInfo <span class="p">}</span> <span class="p">{</span>
+  # Allow this parameter to be overwritten by the propagate function
+  set ip_handle <span class="p">[</span>get_bd_cells $cellpath<span class="p">]</span>
+  bd::mark_propagate_overrideable $ip_handle <span class="s2">"FREQ_HZ"</span>
+  
+  # ... rest of init code
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>This tells Vivado that the FREQ_HZ parameter should be updated when properties propagate through the block design.</p>
+
+<h2 id="step-4-add-gui-parameter-mapping-xgui">Step 4: Add GUI Parameter Mapping (xgui)</h2>
+
+<p>In your <code class="language-plaintext highlighter-rouge">xgui/YOURIP_v1_0.tcl</code> file, ensure you have the update procedure for the model parameter:</p>
+
+<div class="language-tcl highlighter-rouge"><div class="highlight"><pre class="highlight"><code>proc update_MODELPARAM_VALUE.FREQ_HZ <span class="p">{</span> MODELPARAM_VALUE.FREQ_HZ PARAM_VALUE.FREQ_HZ IPINST <span class="p">}</span> <span class="p">{</span>
+  # Procedure called to set VHDL generic/Verilog parameter value<span class="p">(</span>s<span class="p">)</span> based on TCL parameter value
+  set_property value <span class="p">[</span>get_property value $<span class="p">{</span>PARAM_VALUE.FREQ_HZ<span class="p">}]</span> $<span class="p">{</span>MODELPARAM_VALUE.FREQ_HZ<span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>This ensures the GUI parameter value gets passed to your Verilog/VHDL module as a parameter.</p>
+
+<h2 id="how-it-works">How It Works</h2>
+
+<p>Here’s the complete flow when you connect a clock in IPI:</p>
+
+<ol>
+  <li><strong>Clock Connection</strong>: You connect a clock source (e.g., processing system at 88.8 MHz) to your IP’s clock input</li>
+  <li><strong>Vivado Propagation</strong>: IPI’s propagation engine runs and updates the <code class="language-plaintext highlighter-rouge">S_AXI_CLK</code> interface’s FREQ_HZ</li>
+  <li><strong>Dependency Evaluation</strong>: The <code class="language-plaintext highlighter-rouge">spirit:dependency</code> expression is evaluated, linking the interface FREQ_HZ to PARAM_VALUE.FREQ_HZ</li>
+  <li><strong>Parameter Update</strong>: Your custom FREQ_HZ parameter is updated to 88.8 MHz</li>
+  <li><strong>Hardware Generation</strong>: The new frequency value is passed to your RTL module as a parameter</li>
+</ol>
+
+<h2 id="testing-the-configuration">Testing the Configuration</h2>
+
+<ol>
+  <li><strong>Add your IP to a block design</strong> in Vivado IPI</li>
+  <li><strong>Connect a clock source</strong> with a known frequency (e.g., ZYNQ processing_system7 FCLK_CLK0)</li>
+  <li><strong>Check the IP configuration</strong> - Right-click your IP and select “Customize”</li>
+  <li><strong>Verify the FREQ_HZ parameter</strong> matches the connected clock frequency</li>
+</ol>
+
+<p>If it doesn’t update:</p>
+<ul>
+  <li>Check that <code class="language-plaintext highlighter-rouge">spirit:resolve="user"</code> and <code class="language-plaintext highlighter-rouge">isEnabled = true</code> in component.xml</li>
+  <li>Verify the <code class="language-plaintext highlighter-rouge">spirit:dependency</code> attribute is correctly formatted</li>
+  <li>Ensure <code class="language-plaintext highlighter-rouge">bd::mark_propagate_overrideable</code> is called in bd.tcl init</li>
+  <li>Try refreshing the IP catalog and upgrading the IP in your block design</li>
+</ul>
+
+<h2 id="common-pitfalls">Common Pitfalls</h2>
+
+<h3 id="pitfall-1-parameter-set-to-generated">Pitfall 1: Parameter Set to “generated”</h3>
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c">&lt;!-- WRONG --&gt;</span>
+<span class="nt">&lt;spirit:value</span> <span class="na">spirit:resolve=</span><span class="s">"generated"</span> <span class="err">...</span><span class="nt">&gt;</span>
+</code></pre></div></div>
+<p>This prevents user and script modifications.</p>
+
+<h3 id="pitfall-2-missing-dependency-link">Pitfall 2: Missing Dependency Link</h3>
+<p>Without the <code class="language-plaintext highlighter-rouge">spirit:dependency</code> attribute, there’s no connection between the clock interface and your parameter.</p>
+
+<h3 id="pitfall-3-trying-to-read-from-pin-or-net-in-post_propagate">Pitfall 3: Trying to Read from Pin or Net in post_propagate</h3>
+<p>Attempting to read frequency from pins or nets in <code class="language-plaintext highlighter-rouge">post_propagate</code> is unreliable:</p>
+<div class="language-tcl highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># DON'T DO THIS - unreliable
+</span>set freq <span class="p">[</span>get_property CONFIG.FREQ_HZ <span class="p">[</span>get_bd_pins <span class="s2">"</span><span class="nv">$cellpath</span><span class="s2">/s_axi_aclk"</span><span class="p">]]</span>
+</code></pre></div></div>
+
+<p>The dependency approach is more robust and follows Vivado’s intended design flow.</p>
+
+<h3 id="pitfall-4-forgetting-to-upgrade-ip">Pitfall 4: Forgetting to Upgrade IP</h3>
+<p>After modifying component.xml, you must:</p>
+<ol>
+  <li>Refresh the IP catalog (Tools → Report → Refresh IP Catalog)</li>
+  <li>Upgrade the IP in your block design (Right-click → Upgrade IP)</li>
+</ol>
+
+<h2 id="use-cases">Use Cases</h2>
+
+<p>This technique is valuable for:</p>
+<ul>
+  <li><strong>Timing-critical logic</strong>: Adapting timeout counters or state machine delays based on actual clock frequency</li>
+  <li><strong>Baud rate generators</strong>: Calculating divider values for UART or other serial protocols</li>
+  <li><strong>Performance monitoring</strong>: Reporting throughput in real-world units (MB/s instead of cycles)</li>
+  <li><strong>Clock domain crossing</strong>: Validating frequency relationships between multiple clocks</li>
+  <li><strong>Power estimation</strong>: Providing accurate frequency information to power analysis tools</li>
+</ul>
+
+<h2 id="complete-example-structure">Complete Example Structure</h2>
+
+<p>Your IP should have these key files properly configured:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>your_ip_1_0/
+├── component.xml              # Parameter definitions with dependencies
+├── bd/
+│   └── bd.tcl                 # mark_propagate_overrideable in init
+├── xgui/
+│   └── your_ip_v1_0.tcl      # update_MODELPARAM_VALUE procedures
+└── hdl/
+    └── your_ip.v              # Module with FREQ_HZ parameter
+</code></pre></div></div>
+
+<h2 id="conclusion">Conclusion</h2>
+
+<p>Propagating clock frequencies from Vivado IPI to custom IP parameters requires careful coordination between component.xml, bd.tcl, and xgui TCL scripts. The key insight is using the <code class="language-plaintext highlighter-rouge">spirit:dependency</code> attribute to create a bidirectional link between the clock interface’s FREQ_HZ and your user parameter.</p>
+
+<p>This approach is more robust than attempting to read frequency values from pins or nets in propagation scripts, as it leverages Vivado’s built-in parameter dependency evaluation system.</p>
+
+<p>Once configured correctly, your IP will automatically update its frequency parameter whenever the clock source changes, enabling adaptive timing and performance-aware behavior in your hardware designs.</p>
+
+</div>
+
+<div class="related">
+  <h2>Related Posts</h2>
+  <ul class="related-posts">
+    
+      <li>
+        <h3>
+          <a href="/2026/02/08/ollama-dual-rocm-gpu/">
+            Running Ollama on Mixed AMD AMD GPUs (RX 7700 XT + RX 6600)
+            <small>08 Feb 2026</small>
+          </a>
+        </h3>
+      </li>
+    
+      <li>
+        <h3>
+          <a href="/blog/2024/05/03/fccm-2024/">
+            FCCM 2024
+            <small>03 May 2024</small>
+          </a>
+        </h3>
+      </li>
+    
+      <li>
+        <h3>
+          <a href="/blog/2022/05/05/DPU-guide/">
+            Xilinx DPU Setup Guide
+            <small>05 May 2022</small>
+          </a>
+        </h3>
+      </li>
+    
+  </ul>
+</div>
+</div>
+    </div>
+  </body>
+</html>
