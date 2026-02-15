@@ -183,6 +183,8 @@
 
 <p>Setting the context size in <code class="language-plaintext highlighter-rouge">opencode.json</code> isn’t enough; that only tells the editor when to start compacting the conversation. To actually fix this, you need to create a custom model in Ollama with an expanded context parameter.</p>
 
+<hr />
+
 <h3 id="step-1-create-a-modelfile">Step 1: Create a Modelfile</h3>
 
 <p>Run the following in your terminal to define a larger context (I recommend starting significantly higher than 4096):</p>
@@ -190,15 +192,13 @@
 <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">echo</span> <span class="s2">"FROM [base-model]</span><span class="se">\n</span><span class="s2">PARAMETER num_ctx [bigger-model-size]"</span> <span class="o">&gt;</span> Modelfile
 </code></pre></div></div>
 
-<p>**</p>
-
 <h3 id="step-2-build-and-launch">Step 2: Build and Launch</h3>
 
 <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>ollama create qwen3-agent <span class="nt">-f</span> Modelfile
 ollama launch opencode <span class="nt">--model</span> qwen3-agent
 </code></pre></div></div>
 
-<p>**</p>
+<hr />
 
 <h2 id="my-setup">My Setup</h2>
 

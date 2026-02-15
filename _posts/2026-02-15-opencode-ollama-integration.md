@@ -38,6 +38,8 @@ When using an agentic editor like OpenCode, that window is shared between the co
 
 Setting the context size in `opencode.json` isn't enough; that only tells the editor when to start compacting the conversation. To actually fix this, you need to create a custom model in Ollama with an expanded context parameter.
 
+---
+
 ### Step 1: Create a Modelfile
 
 Run the following in your terminal to define a larger context (I recommend starting significantly higher than 4096):
@@ -46,8 +48,6 @@ Run the following in your terminal to define a larger context (I recommend start
 echo "FROM [base-model]\nPARAMETER num_ctx [bigger-model-size]" > Modelfile
 ```
 
-**
-
 ### Step 2: Build and Launch
 
 ```bash
@@ -55,7 +55,7 @@ ollama create qwen3-agent -f Modelfile
 ollama launch opencode --model qwen3-agent
 ```
 
-**
+---
 
 ## My Setup
 
