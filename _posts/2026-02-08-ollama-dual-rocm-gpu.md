@@ -1,9 +1,16 @@
 ---
-layout: post
-title: Running Ollama on Mixed AMD GPUs (RX 7700 XT + RX 6600)
 id: 2026-02-08-ollama-dual-rocm-gpu
 aliases: []
-tags: [rocm, ollama, amd, gpu]
+tags:
+  - rocm
+  - ollama
+  - amd
+  - gpu
+author: Tendayi Kamucheka
+category: blog
+date: February 8, 2026
+layout: post
+title: Running Ollama on Mixed AMD GPUs (RX 7700 XT + RX 6600)
 ---
 
 Lately I have been looking for more ways to integrate LLMs and agents into my workflow. Outside of the code I actually want to write, I am often faced with tasks I would categorize as laborious chores. This feels like a good fit for agents but I have also been thinking about privacy when using commercial offerings, so I have been exploring locally hosted small models.

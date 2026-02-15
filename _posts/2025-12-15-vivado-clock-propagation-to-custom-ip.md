@@ -1,9 +1,10 @@
 ---
-layout: post
-title: Propagating Clock Frequency from Vivado IPI to Custom AXI IP
 id: 2025-12-15-vivado-clock-propagation-to-custom-ip
 aliases: []
 tags: []
+category: blog
+layout: post
+title: Propagating Clock Frequency from Vivado IPI to Custom AXI IP
 ---
 
 When creating custom AXI IP cores in Vivado, you often need to know the operating frequency of the clock signal. While Vivado's IP Integrator (IPI) automatically propagates clock frequencies between connected components, getting that frequency value into your custom IP's parameters requires specific configuration.

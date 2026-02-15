@@ -17,8 +17,8 @@
 
   <!-- CSS -->
   <link rel="stylesheet" href="http://localhost:4000/public/css/poole.css" />
-  <link rel="stylesheet" href="http://localhost:4000/public/css/syntax.css" />
   <link rel="stylesheet" href="http://localhost:4000/public/css/hyde.css" />
+  <link rel="stylesheet" href="http://localhost:4000/public/css/syntax.css" />
   <link rel="stylesheet" href="http://localhost:4000/public/css/custom.css" />
   <!-- <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=PT+Sans:400,400italic,700|Abril+Fatface"> -->
 
@@ -115,6 +115,10 @@
            
          
            
+             
+           
+         
+           
             
         <a
           class="sidebar-nav-item"
@@ -172,7 +176,7 @@
 
 <h2 id="what-actually-worked">What Actually Worked</h2>
 
-<p>The fix was to set the per-GPU override form of the variable. In single-GPU setups the variable is just <code class="language-plaintext highlighter-rouge">HSA_OVERRIDE_GFX_VERSION</code>. For multi-GPU setups it becomes <code class="language-plaintext highlighter-rouge">HSA_OVERRIDE_GFX_VERSION_[GPU]</code>, where the GPU index is 1-based in my testing. With two devices, the correct mapping was:</p>
+<p>The fix was to set the per-GPU override form of the variable. In single-GPU setups the variable is just <code class="language-plaintext highlighter-rouge">HSA_OVERRIDE_GFX_VERSION</code>. For multi-GPU setups it becomes <code class="language-plaintext highlighter-rouge">HSA_OVERRIDE_GFX_VERSION_[GPU]</code>, where the GPU index is 1-based in my testing. One possible explanation is that the CPU may be counted as device 0, which would shift the GPU indices by one, but I have not verified this. With two devices, the correct mapping was:</p>
 
 <ul>
   <li><code class="language-plaintext highlighter-rouge">HSA_OVERRIDE_GFX_VERSION_1=11.0.1</code> for the RX 7700 XT (primary)</li>
@@ -181,7 +185,7 @@
 
 <p>This is the opposite of what I expected at first. Most ROCm device selection variables are 0-indexed (for example, <code class="language-plaintext highlighter-rouge">HIP_VISIBLE_DEVICES</code> and <code class="language-plaintext highlighter-rouge">ROCR_VISIBLE_DEVICES</code>). In my testing, <code class="language-plaintext highlighter-rouge">HSA_OVERRIDE_GFX_VERSION_%d</code> is 1-indexed. That distinction was the key to getting the second GPU online.</p>
 
-<p>Based on my findings, this text in the Ollama docs is inaccurate:</p>
+<p>Based on my findings, this text in the Ollama docs may be inaccurate:</p>
 
 <blockquote>
   <p>If you have multiple GPUs with different GFX versions, append the numeric device number to the environment variable to set them individually. For example, HSA_OVERRIDE_GFX_VERSION_0=10.3.0 and HSA_OVERRIDE_GFX_VERSION_1=11.0.0</p>
@@ -211,7 +215,8 @@
 
 <p>The relevant signal in <code class="language-plaintext highlighter-rouge">rocm-smi</code> is the device list and VRAM usage. On a working setup, both devices should be visible and reported with non-zero VRAM percentages under load. Here is a trimmed example of the output, with the columns that matter:</p>
 
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Device  Node  IDs           ...  Power  ...  VRAM%  GPU%
+<div class="language-sh highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># rocm-smi</span>
+Device  Node  IDs           ...  Power  ...  VRAM%  GPU%
 0       1     0x747e, 46094 ...  59.0W  ...  70%    1%
 1       2     0x73ff, 35521 ...  39.0W  ...  69%    43%
 </code></pre></div></div>
@@ -240,7 +245,16 @@
     
       <li>
         <h3>
-          <a href="/2025/12/15/vivado-clock-propagation-to-custom-ip/">
+          <a href="/blog/2026/02/15/opencode-ollama-integration/">
+            Optimizing Local LLM Context for Agentic Coding with Ollama and OpenCode
+            <small>15 Feb 2026</small>
+          </a>
+        </h3>
+      </li>
+    
+      <li>
+        <h3>
+          <a href="/blog/2025/12/15/vivado-clock-propagation-to-custom-ip/">
             Propagating Clock Frequency from Vivado IPI to Custom AXI IP
             <small>15 Dec 2025</small>
           </a>
@@ -252,15 +266,6 @@
           <a href="/blog/2024/05/03/fccm-2024/">
             FCCM 2024
             <small>03 May 2024</small>
-          </a>
-        </h3>
-      </li>
-    
-      <li>
-        <h3>
-          <a href="/blog/2022/05/05/DPU-guide/">
-            Xilinx DPU Setup Guide
-            <small>05 May 2022</small>
           </a>
         </h3>
       </li>

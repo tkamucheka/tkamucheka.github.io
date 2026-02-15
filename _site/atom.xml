@@ -4,7 +4,7 @@
  <title>Tendayi Kamucheka</title>
  <link href="http://localhost:4000/atom.xml" rel="self"/>
  <link href="http://localhost:4000/"/>
- <updated>2026-02-08T21:26:03-06:00</updated>
+ <updated>2026-02-15T08:05:51-06:00</updated>
  <id>http://localhost:4000</id>
  <author>
    <name>Tendayi Kamucheka</name>
@@ -13,13 +13,82 @@
 
  
  <entry>
-   <title>Ollama Dual Rocm Gpu</title>
-   <link href="http://localhost:4000/2026/02/08/ollama-dual-rocm-gpu/"/>
-   <updated>2026-02-08T00:00:00-06:00</updated>
-   <id>http://localhost:4000/2026/02/08/ollama-dual-rocm-gpu</id>
-   <content type="html">&lt;h1 id=&quot;running-ollama-on-mixed-amd-amd-gpus-rx-7700-xt--rx-6600&quot;&gt;Running Ollama on Mixed AMD AMD GPUs (RX 7700 XT + RX 6600)&lt;/h1&gt;
+   <title>Optimizing Local LLM Context for Agentic Coding with Ollama and OpenCode</title>
+   <link href="http://localhost:4000/blog/2026/02/15/opencode-ollama-integration/"/>
+   <updated>2026-02-15T00:00:00-06:00</updated>
+   <id>http://localhost:4000/blog/2026/02/15/opencode-ollama-integration</id>
+   <content type="html">&lt;p&gt;My journey of integrating Large Language Models (LLMs) into my daily development workflow continues to evolve. Recently, I’ve been focused on bridging the gap between &lt;strong&gt;Ollama&lt;/strong&gt;, my preferred local LLM platform, and &lt;strong&gt;OpenCode&lt;/strong&gt;. While the promise of a local, private coding agent is enticing, the reality of the initial setup was, frankly, underwhelming.&lt;/p&gt;
 
-&lt;p&gt;Lately I have been looking for more ways to integrate LLMs and agents into my workflow. Outside of the code I actually want to write, I am often faced with tasks I would categorize as laborious chores. This feels like a good fit for agents. I have also been thinking about privacy when using commercial offerings, so I have been exploring locally hosted small models.&lt;/p&gt;
+&lt;p&gt;If you’ve followed the standard guides and arrived at the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;ollama launch opencode&lt;/code&gt; stage only to find your “agent” is more of a “waiter that forgets the order,” this post is for you.&lt;/p&gt;
+
+&lt;h2 id=&quot;the-symptoms-of-a-lobotomized-model&quot;&gt;The Symptoms of a “Lobotomized” Model&lt;/h2&gt;
+
+&lt;p&gt;You might have noticed that even with a powerful model, the agentic features in OpenCode often fail in bizarre ways. In my testing, I encountered several “red flags” that indicated the integration wasn’t working as intended:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;strong&gt;The JSON Cliff&lt;/strong&gt;: The model starts responding with a short JSON snippet and then abruptly goes silent.&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;Reasoning Loops&lt;/strong&gt;: Getting stuck in &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;&amp;lt;thinking&amp;gt;...&amp;lt;/thinking&amp;gt;&lt;/code&gt; or repeating the same suggestion—often claiming you haven’t specified a task when you clearly have.&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;Permission Paralysis&lt;/strong&gt;: The model fails to execute basic commands like &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;ls&lt;/code&gt; or &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;git&lt;/code&gt;, or can’t read files from the filesystem despite having explicit permissions in the Ollama configuration.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&quot;the-context-window-trap&quot;&gt;The Context Window Trap&lt;/h2&gt;
+
+&lt;p&gt;The culprit isn’t usually the model’s intelligence, but its memory. By default, Ollama uses a &lt;strong&gt;context window of 4096 tokens&lt;/strong&gt;.&lt;/p&gt;
+
+&lt;p&gt;When using an agentic editor like OpenCode, that window is shared between the conversation history, the list of available tools, the system prompt, and your actual code. If you want to diagnose this yourself, stop your Ollama service and run &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;ollama serve&lt;/code&gt; in a terminal. When you trigger a prompt in OpenCode, you’ll likely see a “200” response followed by a warning that your prompt was truncated to fit the context window.&lt;/p&gt;
+
+&lt;h2 id=&quot;the-solution-creating-a-custom-agent-model&quot;&gt;The Solution: Creating a Custom Agent Model&lt;/h2&gt;
+
+&lt;p&gt;Setting the context size in &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;opencode.json&lt;/code&gt; isn’t enough; that only tells the editor when to start compacting the conversation. To actually fix this, you need to create a custom model in Ollama with an expanded context parameter.&lt;/p&gt;
+
+&lt;h3 id=&quot;step-1-create-a-modelfile&quot;&gt;Step 1: Create a Modelfile&lt;/h3&gt;
+
+&lt;p&gt;Run the following in your terminal to define a larger context (I recommend starting significantly higher than 4096):&lt;/p&gt;
+
+&lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nb&quot;&gt;echo&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;FROM [base-model]&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\n&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;PARAMETER num_ctx [bigger-model-size]&quot;&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt; Modelfile
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;**&lt;/p&gt;
+
+&lt;h3 id=&quot;step-2-build-and-launch&quot;&gt;Step 2: Build and Launch&lt;/h3&gt;
+
+&lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;ollama create qwen3-agent &lt;span class=&quot;nt&quot;&gt;-f&lt;/span&gt; Modelfile
+ollama launch opencode &lt;span class=&quot;nt&quot;&gt;--model&lt;/span&gt; qwen3-agent
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;**&lt;/p&gt;
+
+&lt;h2 id=&quot;my-setup&quot;&gt;My Setup&lt;/h2&gt;
+
+&lt;p&gt;I’m currently running this setup with &lt;strong&gt;20GB of VRAM&lt;/strong&gt;.&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;strong&gt;Base Model&lt;/strong&gt;: &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;qwen3:14b&lt;/code&gt; (~9GB on disk).&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;Custom Model&lt;/strong&gt;: &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;qwen3-agent&lt;/code&gt; with &lt;strong&gt;40,960 tokens&lt;/strong&gt; of context.&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;Performance&lt;/strong&gt;: This setup consumes about 16GB of VRAM. A major perk of Ollama is that it automatically handled the split across my two GPUs without any manual ROCm tweaking.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h3 id=&quot;keep-in-mind&quot;&gt;Keep in Mind&lt;/h3&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;strong&gt;VRAM is King&lt;/strong&gt;: Larger context windows demand more memory. You are limited by your hardware.&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;Model Ceilings&lt;/strong&gt;: Every model has a hard limit. I found 40,960 to be the “sweet spot” for &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;qwen3:14b&lt;/code&gt;; anything higher and the model would default back to that value anyway.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&quot;final-thoughts&quot;&gt;Final Thoughts&lt;/h2&gt;
+
+&lt;p&gt;While this local setup is great for saving on API costs for simple file manipulations and shell commands, it still doesn’t quite replace the heavy lifting of a remote model like Gemini or Claude for massive codebases. However, it’s a massive step forward for privacy-conscious development.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;In my next post&lt;/strong&gt;: I had a mind-blowing interaction with Gemini Pro’s new personalization settings this morning that I can’t wait to break down. Stay tuned!&lt;/p&gt;
+</content>
+ </entry>
+ 
+ <entry>
+   <title>Running Ollama on Mixed AMD GPUs (RX 7700 XT + RX 6600)</title>
+   <link href="http://localhost:4000/blog/2026/02/08/ollama-dual-rocm-gpu/"/>
+   <updated>2026-02-08T00:00:00-06:00</updated>
+   <id>http://localhost:4000/blog/2026/02/08/ollama-dual-rocm-gpu</id>
+   <content type="html">&lt;p&gt;Lately I have been looking for more ways to integrate LLMs and agents into my workflow. Outside of the code I actually want to write, I am often faced with tasks I would categorize as laborious chores. This feels like a good fit for agents but I have also been thinking about privacy when using commercial offerings, so I have been exploring locally hosted small models.&lt;/p&gt;
 
 &lt;p&gt;This post documents how I got Ollama working on a system with two different AMD GPUs: an RX 7700 XT (supported) and an RX 6600 (nominally unsupported). The key detail is how &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;HSA_OVERRIDE_GFX_VERSION_%d&lt;/code&gt;, being 1-indexed, behaves with multiple devices, and how that differs from other ROCm-related environment variables.&lt;/p&gt;
 
@@ -36,7 +105,7 @@
 
 &lt;h2 id=&quot;what-actually-worked&quot;&gt;What Actually Worked&lt;/h2&gt;
 
-&lt;p&gt;The fix was to set the per-GPU override form of the variable. In single-GPU setups the variable is just &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;HSA_OVERRIDE_GFX_VERSION&lt;/code&gt;. For multi-GPU setups it becomes &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;HSA_OVERRIDE_GFX_VERSION_[GPU]&lt;/code&gt;, where the GPU index is 1-based in my testing. With two devices, the correct mapping was:&lt;/p&gt;
+&lt;p&gt;The fix was to set the per-GPU override form of the variable. In single-GPU setups the variable is just &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;HSA_OVERRIDE_GFX_VERSION&lt;/code&gt;. For multi-GPU setups it becomes &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;HSA_OVERRIDE_GFX_VERSION_[GPU]&lt;/code&gt;, where the GPU index is 1-based in my testing. One possible explanation is that the CPU may be counted as device 0, which would shift the GPU indices by one, but I have not verified this. With two devices, the correct mapping was:&lt;/p&gt;
 
 &lt;ul&gt;
   &lt;li&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;HSA_OVERRIDE_GFX_VERSION_1=11.0.1&lt;/code&gt; for the RX 7700 XT (primary)&lt;/li&gt;
@@ -45,7 +114,7 @@
 
 &lt;p&gt;This is the opposite of what I expected at first. Most ROCm device selection variables are 0-indexed (for example, &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;HIP_VISIBLE_DEVICES&lt;/code&gt; and &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;ROCR_VISIBLE_DEVICES&lt;/code&gt;). In my testing, &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;HSA_OVERRIDE_GFX_VERSION_%d&lt;/code&gt; is 1-indexed. That distinction was the key to getting the second GPU online.&lt;/p&gt;
 
-&lt;p&gt;Based on my findings, this text in the Ollama docs is inaccurate:&lt;/p&gt;
+&lt;p&gt;Based on my findings, this text in the Ollama docs may be inaccurate:&lt;/p&gt;
 
 &lt;blockquote&gt;
   &lt;p&gt;If you have multiple GPUs with different GFX versions, append the numeric device number to the environment variable to set them individually. For example, HSA_OVERRIDE_GFX_VERSION_0=10.3.0 and HSA_OVERRIDE_GFX_VERSION_1=11.0.0&lt;/p&gt;
@@ -75,7 +144,8 @@
 
 &lt;p&gt;The relevant signal in &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;rocm-smi&lt;/code&gt; is the device list and VRAM usage. On a working setup, both devices should be visible and reported with non-zero VRAM percentages under load. Here is a trimmed example of the output, with the columns that matter:&lt;/p&gt;
 
-&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;Device  Node  IDs           ...  Power  ...  VRAM%  GPU%
+&lt;div class=&quot;language-sh highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c&quot;&gt;# rocm-smi&lt;/span&gt;
+Device  Node  IDs           ...  Power  ...  VRAM%  GPU%
 0       1     0x747e, 46094 ...  59.0W  ...  70%    1%
 1       2     0x73ff, 35521 ...  39.0W  ...  69%    43%
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
@@ -99,15 +169,11 @@
  </entry>
  
  <entry>
-   <title>Vivado Clock Propagation To Custom Ip</title>
-   <link href="http://localhost:4000/2025/12/15/vivado-clock-propagation-to-custom-ip/"/>
+   <title>Propagating Clock Frequency from Vivado IPI to Custom AXI IP</title>
+   <link href="http://localhost:4000/blog/2025/12/15/vivado-clock-propagation-to-custom-ip/"/>
    <updated>2025-12-15T00:00:00-06:00</updated>
-   <id>http://localhost:4000/2025/12/15/vivado-clock-propagation-to-custom-ip</id>
-   <content type="html">&lt;h1 id=&quot;propagating-clock-frequency-from-vivado-ipi-to-custom-axi-ip&quot;&gt;Propagating Clock Frequency from Vivado IPI to Custom AXI IP&lt;/h1&gt;
-
-&lt;h2 id=&quot;the-problem&quot;&gt;The Problem&lt;/h2&gt;
-
-&lt;p&gt;When creating custom AXI IP cores in Vivado, you often need to know the operating frequency of the clock signal. While Vivado’s IP Integrator (IPI) automatically propagates clock frequencies between connected components, getting that frequency value into your custom IP’s parameters requires specific configuration.&lt;/p&gt;
+   <id>http://localhost:4000/blog/2025/12/15/vivado-clock-propagation-to-custom-ip</id>
+   <content type="html">&lt;p&gt;When creating custom AXI IP cores in Vivado, you often need to know the operating frequency of the clock signal. While Vivado’s IP Integrator (IPI) automatically propagates clock frequencies between connected components, getting that frequency value into your custom IP’s parameters requires specific configuration.&lt;/p&gt;
 
 &lt;p&gt;Without proper setup, you’ll find that:&lt;/p&gt;
 &lt;ul&gt;
@@ -329,7 +395,7 @@
    <link href="http://localhost:4000/blog/2024/05/03/fccm-2024/"/>
    <updated>2024-05-03T00:00:00-05:00</updated>
    <id>http://localhost:4000/blog/2024/05/03/fccm-2024</id>
-   <content type="html">&lt;p&gt;&lt;img src=&quot;http://localhost:4000/assets/fccm2024_poster.svg&quot; alt=&quot;FCCM2024&quot; /&gt;&lt;/p&gt;
+   <content type="html">&lt;p&gt;&lt;img src=&quot;/assets/fccm2024_poster.svg&quot; alt=&quot;FCCM2024&quot; /&gt;&lt;/p&gt;
 </content>
  </entry>
  

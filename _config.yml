@@ -1,9 +1,12 @@
 # Dependencies
 markdown:         kramdown
 highlighter:      rouge
+kramdown:
+  input:          GFM
+  syntax_highlighter: rouge
 
 # Permalinks
-permalink:        pretty
+permalink:        :categories/:year/:month/:day/:title/
 
 # Setup
 title:            Tendayi Kamucheka

@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+  <link href="http://gmpg.org/xfn/11" rel="profile" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+
+  <!-- Enable responsiveness on mobile devices-->
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1"
+  />
+
+  <title>
+     Optimizing Local LLM Context for Agentic Coding with Ollama and OpenCode &middot; Tendayi Kamucheka 
+  </title>
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="http://localhost:4000/public/css/poole.css" />
+  <link rel="stylesheet" href="http://localhost:4000/public/css/hyde.css" />
+  <link rel="stylesheet" href="http://localhost:4000/public/css/syntax.css" />
+  <link rel="stylesheet" href="http://localhost:4000/public/css/custom.css" />
+  <!-- <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=PT+Sans:400,400italic,700|Abril+Fatface"> -->
+
+  <!-- Icons -->
+  <link
+    rel="apple-touch-icon-precomposed"
+    sizes="144x144"
+    href="public/apple-touch-icon-144-precomposed.png"
+  />
+  <link rel="shortcut icon" href="public/favicon.ico" />
+
+  <!-- RSS -->
+  <link
+    rel="alternate"
+    type="application/rss+xml"
+    title="RSS"
+    href="/atom.xml"
+  />
+</head>
+
+
+  <body>
+    <div id="backdrop">
+      <div class="sidebar">
+  <div class="container">
+    <div class="sidebar-about">
+      <div id="photo-wrapper">
+        <center>
+          <div id="photo-circle">
+            <img
+              id="photo"
+              src="http://localhost:4000/public/images/profile.jpeg"
+            />
+          </div>
+        </center>
+      </div>
+      <div class="sidebar-block">
+        <center>
+          <div id="big-name">
+            <span id="first-name">Tendayi</span>
+            <span id="dot-name">•</span>
+            <span id="last-name">Kamucheka</span>
+          </div>
+        </center>
+        <p class="sidebar-text text-center">Computer Engineering</p>
+        <p class="sidebar-text text-center">PhD Candidate</p>
+        <p class="sidebar-text text-center">University of Arkansas</p>
+        <p class="sidebar-text text-center">tfkamuch@uark.edu</p>
+        <p class="sidebar-text text-center">
+          <a href="http://localhost:4000/assets/tkamucheka_resume.pdf" download>
+            Download Resume
+          </a>
+        </p>
+      </div>
+    </div>
+
+    <hr />
+
+    <div class="sidebar-block">
+      <nav class="sidebar-nav text-md-right">
+        <a
+          class="sidebar-nav-item"
+          href="http://localhost:4000/"
+        >Home</a>
+
+         
+        
+         
+         
+           
+             
+           
+         
+           
+         
+           
+             
+           
+         
+           
+             
+           
+         
+           
+             
+           
+         
+           
+             
+           
+         
+           
+             
+           
+         
+           
+             
+           
+         
+           
+            
+        <a
+          class="sidebar-nav-item"
+          href="http://localhost:4000/Research/"
+          >Publications</a>
+             
+           
+         
+           
+             
+           
+        
+      </nav>
+    </div>
+
+    <hr />
+
+    <div class="sidebar-block">
+      <p class="sidebar-item text-md-right">
+        <a href="https://github.com/tkamucheka" target="_blank">Github</a>
+      </p>
+      <p class="sidebar-item text-md-right">
+        <a href="https://twitter.com/tkamucheka" target="_blank">Twitter</a>
+      </p>
+    </div>
+  </div>
+
+  <div class="container sidebar-sticky">
+    <p class="lead text-md-right"></p>
+    <p class="text-md-right">
+      &copy; 2026. All rights reserved.
+    </p>
+  </div>
+</div>
+
+      <div id="header-wrapper"></div>
+
+      <div class="content container"><div class="post">
+  <h1 class="post-title">Optimizing Local LLM Context for Agentic Coding with Ollama and OpenCode</h1>
+  <span class="post-date">15 Feb 2026</span>
+  <p>My journey of integrating Large Language Models (LLMs) into my daily development workflow continues to evolve. Recently, I’ve been focused on bridging the gap between <strong>Ollama</strong>, my preferred local LLM platform, and <strong>OpenCode</strong>. While the promise of a local, private coding agent is enticing, the reality of the initial setup was, frankly, underwhelming.</p>
+
+<p>If you’ve followed the standard guides and arrived at the <code class="language-plaintext highlighter-rouge">ollama launch opencode</code> stage only to find your “agent” is more of a “waiter that forgets the order,” this post is for you.</p>
+
+<h2 id="the-symptoms-of-a-lobotomized-model">The Symptoms of a “Lobotomized” Model</h2>
+
+<p>You might have noticed that even with a powerful model, the agentic features in OpenCode often fail in bizarre ways. In my testing, I encountered several “red flags” that indicated the integration wasn’t working as intended:</p>
+
+<ul>
+  <li><strong>The JSON Cliff</strong>: The model starts responding with a short JSON snippet and then abruptly goes silent.</li>
+  <li><strong>Reasoning Loops</strong>: Getting stuck in <code class="language-plaintext highlighter-rouge">&lt;thinking&gt;...&lt;/thinking&gt;</code> or repeating the same suggestion—often claiming you haven’t specified a task when you clearly have.</li>
+  <li><strong>Permission Paralysis</strong>: The model fails to execute basic commands like <code class="language-plaintext highlighter-rouge">ls</code> or <code class="language-plaintext highlighter-rouge">git</code>, or can’t read files from the filesystem despite having explicit permissions in the Ollama configuration.</li>
+</ul>
+
+<h2 id="the-context-window-trap">The Context Window Trap</h2>
+
+<p>The culprit isn’t usually the model’s intelligence, but its memory. By default, Ollama uses a <strong>context window of 4096 tokens</strong>.</p>
+
+<p>When using an agentic editor like OpenCode, that window is shared between the conversation history, the list of available tools, the system prompt, and your actual code. If you want to diagnose this yourself, stop your Ollama service and run <code class="language-plaintext highlighter-rouge">ollama serve</code> in a terminal. When you trigger a prompt in OpenCode, you’ll likely see a “200” response followed by a warning that your prompt was truncated to fit the context window.</p>
+
+<h2 id="the-solution-creating-a-custom-agent-model">The Solution: Creating a Custom Agent Model</h2>
+
+<p>Setting the context size in <code class="language-plaintext highlighter-rouge">opencode.json</code> isn’t enough; that only tells the editor when to start compacting the conversation. To actually fix this, you need to create a custom model in Ollama with an expanded context parameter.</p>
+
+<h3 id="step-1-create-a-modelfile">Step 1: Create a Modelfile</h3>
+
+<p>Run the following in your terminal to define a larger context (I recommend starting significantly higher than 4096):</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">echo</span> <span class="s2">"FROM [base-model]</span><span class="se">\n</span><span class="s2">PARAMETER num_ctx [bigger-model-size]"</span> <span class="o">&gt;</span> Modelfile
+</code></pre></div></div>
+
+<p>**</p>
+
+<h3 id="step-2-build-and-launch">Step 2: Build and Launch</h3>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>ollama create qwen3-agent <span class="nt">-f</span> Modelfile
+ollama launch opencode <span class="nt">--model</span> qwen3-agent
+</code></pre></div></div>
+
+<p>**</p>
+
+<h2 id="my-setup">My Setup</h2>
+
+<p>I’m currently running this setup with <strong>20GB of VRAM</strong>.</p>
+
+<ul>
+  <li><strong>Base Model</strong>: <code class="language-plaintext highlighter-rouge">qwen3:14b</code> (~9GB on disk).</li>
+  <li><strong>Custom Model</strong>: <code class="language-plaintext highlighter-rouge">qwen3-agent</code> with <strong>40,960 tokens</strong> of context.</li>
+  <li><strong>Performance</strong>: This setup consumes about 16GB of VRAM. A major perk of Ollama is that it automatically handled the split across my two GPUs without any manual ROCm tweaking.</li>
+</ul>
+
+<h3 id="keep-in-mind">Keep in Mind</h3>
+
+<ul>
+  <li><strong>VRAM is King</strong>: Larger context windows demand more memory. You are limited by your hardware.</li>
+  <li><strong>Model Ceilings</strong>: Every model has a hard limit. I found 40,960 to be the “sweet spot” for <code class="language-plaintext highlighter-rouge">qwen3:14b</code>; anything higher and the model would default back to that value anyway.</li>
+</ul>
+
+<h2 id="final-thoughts">Final Thoughts</h2>
+
+<p>While this local setup is great for saving on API costs for simple file manipulations and shell commands, it still doesn’t quite replace the heavy lifting of a remote model like Gemini or Claude for massive codebases. However, it’s a massive step forward for privacy-conscious development.</p>
+
+<p><strong>In my next post</strong>: I had a mind-blowing interaction with Gemini Pro’s new personalization settings this morning that I can’t wait to break down. Stay tuned!</p>
+
+</div>
+
+<div class="related">
+  <h2>Related Posts</h2>
+  <ul class="related-posts">
+    
+      <li>
+        <h3>
+          <a href="/blog/2026/02/08/ollama-dual-rocm-gpu/">
+            Running Ollama on Mixed AMD GPUs (RX 7700 XT + RX 6600)
+            <small>08 Feb 2026</small>
+          </a>
+        </h3>
+      </li>
+    
+      <li>
+        <h3>
+          <a href="/blog/2025/12/15/vivado-clock-propagation-to-custom-ip/">
+            Propagating Clock Frequency from Vivado IPI to Custom AXI IP
+            <small>15 Dec 2025</small>
+          </a>
+        </h3>
+      </li>
+    
+      <li>
+        <h3>
+          <a href="/blog/2024/05/03/fccm-2024/">
+            FCCM 2024
+            <small>03 May 2024</small>
+          </a>
+        </h3>
+      </li>
+    
+  </ul>
+</div>
+</div>
+    </div>
+  </body>
+</html>
