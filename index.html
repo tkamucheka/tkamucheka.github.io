@@ -9,12 +9,12 @@ order: 0
   {% for post in paginator.posts %}
   <div class="post">
     <h1 class="post-title">
-      <a href="{{ post.url }}"> {{ post.title }} </a>
+      <a href="{{ post.url }}"> {{ post.data.title | default: post.title }} </a>
     </h1>
 
     <span class="post-date">{{ post.date | date_to_string }}</span>
 
-    {{ post.excerpt }}
+    <p class="post-excerpt">{{ post.excerpt }}</p>
   </div>
   {% endfor %}
 </div>
@@ -28,7 +28,9 @@ order: 0
   >
   {% else %}
   <span class="pagination-item older">Older</span>
-  {% endif %} {% if paginator.previous_page %} {% if paginator.page == 2 %}
+  {% endif %} 
+  
+  {% if paginator.previous_page %} {% if paginator.page == 2 %}
   <a class="pagination-item newer" href="{{ site.base_url }}">Newer</a>
   {% else %}
   <a

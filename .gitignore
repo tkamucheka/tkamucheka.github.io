@@ -1,2 +1,4 @@
 # Ignore OSX junk
 .DS_Store
+
+.obsidian

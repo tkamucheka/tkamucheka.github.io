@@ -6,7 +6,7 @@
           <div id="photo-circle">
             <img
               id="photo"
-              src="{{ site.baseurl }}public/images/profile.jpeg"
+              src="{{ '/public/images/profile.jpeg' | absolute_url }}"
             />
           </div>
         </center>
@@ -19,11 +19,12 @@
             <span id="last-name">Kamucheka</span>
           </div>
         </center>
-        <p class="sidebar-text text-center">PhD Student</p>
+        <p class="sidebar-text text-center">Computer Engineering</p>
+        <p class="sidebar-text text-center">PhD Candidate</p>
         <p class="sidebar-text text-center">University of Arkansas</p>
         <p class="sidebar-text text-center">tfkamuch@uark.edu</p>
         <p class="sidebar-text text-center">
-          <a href="{{ site.baseurl }}assets/tkamucheka_resume.pdf" download>
+          <a href="{{ '/assets/tkamucheka_resume.pdf' | absolute_url }}" download>
             Download Resume
           </a>
         </p>
@@ -50,7 +51,7 @@
             {% if node.nav_link %}
         <a
           class="sidebar-nav-item{% if page.url == node.url %} active{% endif %}"
-          href="{{ node.url }}"
+          href="{{ node.url | absolute_url }}"
           >{{ node.title }}</a>
             {% endif %} 
           {% endif %} 
