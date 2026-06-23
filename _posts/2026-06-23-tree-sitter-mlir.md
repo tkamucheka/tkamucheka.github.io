@@ -15,11 +15,11 @@ layout: post
 title: "A Dialect-Agnostic Tree-sitter Grammar for MLIR"
 ---
 
-If you spend a meaningful amount of time reading or writing MLIR, you've probably noticed that editor support ranges from "minimal" to "actively lying to you." Syntax highlighting tends to colour everything the same shade of beige. There's no go-to-definition, no structural folding, no rename. You're essentially working in a fancy plain-text editor.
+If you spend a meaningful amount of time working with MLIR in Neovim, you've probably noticed that syntax highlighting mostly exists for upstream dialects. Custom dialects are generally unsupported and treated almost like plaintext. 
 
-The canonical tree-sitter grammar for MLIR — [artagnon/tree-sitter-mlir](https://github.com/artagnon/tree-sitter-mlir) — exists and does useful work, but it takes a dialect-enumeration approach: it knows about `func`, `arith`, `scf`, and a handful of others, and handles their syntax as special cases. I run two custom dialects in my own compiler work, and neither was on the list. Highlighting would go patchy — some keywords recognised, others not, depending on how much of the grammar the parser could infer from context.
+The canonical tree-sitter grammar for MLIR, [artagnon/tree-sitter-mlir](https://github.com/artagnon/tree-sitter-mlir), exists and does useful work, but it takes a dialect-enumeration approach: it knows about `func`, `arith`, `scf`, and a handful of others, and handles their syntax as special cases. I run two custom dialects in my own compiler work, and neither was on the list. Highlighting would go patchy — some keywords recognised, others not, depending on how much of the grammar the parser could infer from context.
 
-I kept coming back to the same question: *can MLIR's own EBNF specification be sufficient to parse arbitrary dialect IR, without enumerating dialects?* I believe the answer is yes — and [tree-sitter-mlir](https://github.com/tkamucheka/tree-sitter-mlir) is my attempt at proving it.
+I kept coming back to the same question: *can MLIR's own EBNF specification be sufficient to parse arbitrary dialect IR, without enumerating dialects?* I believe the answer is yes, and [tree-sitter-mlir](https://github.com/tkamucheka/tree-sitter-mlir) is my attempt at proving it.
 
 Fair warning before we go further: I'm a PhD candidate finishing a dissertation on an MLIR compiler. This entire project was vibe-coded with Claude in the spare minutes before bed. I've done enough testing to be cautiously optimistic, but not enough to be fully confident. Use accordingly, and please open issues when you find the cracks.
 
@@ -79,7 +79,7 @@ Tree-sitter supports GLR mode, which allows the parser to maintain multiple pars
 - A dotted bare identifier like `foo.bar` could be an **op name** or an **attribute key**. Context resolves it.
 - `!MyType` could be a **type alias** or the start of a **dialect type** — depends on whether an angle body follows.
 
-Rather than paper over these ambiguities with lookahead hacks, the grammar declares them honestly and lets dynamic precedence sort them out. There are thirteen declared conflict sets in total — all of them genuine structural ambiguities in the MLIR spec, not artefacts of a sloppy grammar.
+Rather than paper over these ambiguities with lookahead hacks, the grammar declares them honestly and lets dynamic precedence sort them out. There are thirteen declared conflict sets in total, all of them genuine structural ambiguities in the MLIR spec, not artefacts of a sloppy grammar.
 
 One non-obvious design decision worth calling out: several dialects (e.g. `memref.reinterpret_cast`) use a `key: [values]` syntax for named offset/size/stride lists. Admitting a bare `:` token into the prefix list would cause the parser to maintain a "colon-as-prefix" hypothesis in parallel with "colon-as-type-annotation-terminal," and when that hypothesis eventually dies, error recovery spans across operation boundaries — cascading failures. Instead, the grammar handles `key: [...]` with a dedicated rule that treats the whole construct as a single unit.
 
@@ -140,11 +140,11 @@ For Python and Rust bindings, and for using the grammar programmatically, see th
 
 The test suite covers 87 corpus tests drawn from a range of real-world MLIR dialects — `arith`, `func`, `scf`, `affine`, `memref`, `linalg`, `llvm`, `vector`, among others — and all pass. The grammar handles the full generic operation format, all builtin type and attribute forms, affine maps, dense literals, and the custom op prefix patterns that appear in these dialects.
 
-What I'm less confident about: exotic dialect syntax I haven't encountered, and edge cases in the GLR disambiguation under pathological inputs. The grammar is permissive by design — it will parse things that aren't valid MLIR — so it won't catch semantic errors. It's a syntax tree, not a verifier.
+What I'm less confident about: exotic dialect syntax I haven't encountered, and edge cases in the GLR disambiguation under pathological inputs. The grammar is permissive by design, it will parse things that aren't valid MLIR, so it won't catch semantic errors. It's a syntax tree, not a verifier.
 
 If you hit a parse failure or a miscoloured token on real IR, please [open an issue](https://github.com/tkamucheka/tree-sitter-mlir/issues). That's the kind of testing I can't do alone.
 
-One open question I keep returning to: would a hybrid approach make sense — use the upstream dialect-enumeration grammar for known dialects, and fall back to this general parser for everything else? It would likely yield more precise parse trees for the covered dialects. The cost is significant: you'd need to enumerate every upstream dialect, track new ones as they're merged, and keep two grammars in sync. For now, the general parser handles everything well enough that I'm not sure the maintenance burden is worth it — but I haven't ruled it out.
+One open question I keep returning to: would a hybrid approach make sense — use the upstream dialect-enumeration grammar for known dialects, and fall back to this general parser for everything else? It would likely yield more precise parse trees for the covered dialects. The cost is significant: you'd need to enumerate every upstream dialect, track new ones as they're merged, and keep two grammars in sync. For now, the general parser handles everything well enough that I'm not sure the maintenance burden is worth it, but I haven't ruled it out.
 
 ---
 
