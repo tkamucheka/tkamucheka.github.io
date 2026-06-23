@@ -92,7 +92,7 @@ Six [tree-sitter query files](https://github.com/tkamucheka/tree-sitter-mlir/blo
 | File | What it enables |
 |---|---|
 | `highlights.scm` | Syntax highlighting — dialect prefixes, op mnemonics, SSA values, types, attributes, keywords |
-| `locals.scm` | SSA value scoping — rename, go-to-definition, reference highlighting |
+| `locals.scm` | SSA value scoping — declares definitions and references for editors that support rename and go-to-definition |
 | `indents.scm` | Auto-indent inside regions and attribute dictionaries |
 | `folds.scm` | Code folding for regions, dicts, and `dense<...>` literals |
 | `tags.scm` | Symbol index — `func.func`, `module`, type/attr alias definitions |
