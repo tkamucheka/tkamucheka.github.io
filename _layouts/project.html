@@ -1,0 +1,36 @@
+---
+layout: default
+---
+
+{% comment %}
+A project landing page. The page names its entry in _data/projects.yml with
+`project: <slug>`; the header is rendered from that entry.
+{% endcomment %}
+{% for group in site.data.projects %}
+  {% for entry in group.projects %}
+    {% if entry.slug == page.project %}{% assign project = entry %}{% endif %}
+  {% endfor %}
+{% endfor %}
+
+<div class="page project-page">
+  <p class="project-back">
+    <a href="{{ '/projects/' | relative_url }}">&larr; Projects</a>
+  </p>
+
+  <header class="project-header">
+    <h1 class="project-name">{{ project.name }}</h1>
+    <p class="project-summary">{{ project.summary }}</p>
+    <ul class="project-facts">
+      <li>{{ project.language }}</li>
+      {% if project.license %}<li>{{ project.license }} license</li>{% endif %}
+      {% comment %} A project of several repositories lists them in its page. {% endcomment %}
+      {% if project.repos.size == 1 %}
+      <li>
+        <a href="https://github.com/tkamucheka/{{ project.repos[0] }}">github.com/tkamucheka/{{ project.repos[0] }}</a>
+      </li>
+      {% endif %}
+    </ul>
+  </header>
+
+  {{ content }}
+</div>

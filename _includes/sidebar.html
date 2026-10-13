@@ -50,7 +50,7 @@
           {% if node.title != null %} 
             {% if node.nav_link %}
         <a
-          class="sidebar-nav-item{% if page.url == node.url %} active{% endif %}"
+          class="sidebar-nav-item{% if page.url == node.url or page.layout == 'project' and node.url == '/projects/' %} active{% endif %}"
           href="{{ node.url | absolute_url }}"
           >{{ node.title }}</a>
             {% endif %} 

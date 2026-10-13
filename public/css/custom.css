@@ -115,3 +115,76 @@ body {
 .sidebar-nav-item.active {
   color: #268bd2;
 }
+/* Projects */
+
+.project-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+  gap: 1rem;
+  margin: 1rem 0 2rem;
+}
+
+.project-card {
+  display: flex;
+  flex-direction: column;
+  padding: 1rem 1.25rem;
+  border: 1px solid #e5e5e5;
+  border-radius: 6px;
+  color: inherit;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.project-card:hover,
+.project-card:focus {
+  text-decoration: none;
+  border-color: #268bd2;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.project-card-name {
+  font-weight: bold;
+  color: #268bd2;
+}
+
+.project-card-summary {
+  flex: 1;
+  margin: 0.5rem 0;
+  font-size: 0.9rem;
+  color: #515151;
+}
+
+.project-card-language {
+  font-size: 0.8rem;
+  color: #9a9a9a;
+}
+
+.project-back {
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.project-header {
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e5e5e5;
+}
+
+.project-name {
+  margin-bottom: 0.25rem;
+}
+
+.project-summary {
+  font-size: 1.15rem;
+  color: #515151;
+}
+
+.project-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1.25rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.85rem;
+  color: #9a9a9a;
+}
