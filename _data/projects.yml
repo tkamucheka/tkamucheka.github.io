@@ -27,9 +27,9 @@
       license: MIT
       repos: [vscode-dottr]
 
-- group: Neovim and tree-sitter
-  intro: Parser management for Neovim, and tree-sitter grammars for languages
-    without one.
+- group: Neovim, VS Code, and tree-sitter
+  intro: Parser management for Neovim, tree-sitter grammars for languages
+    without one, and a VS Code extension for SPAR assembly.
   projects:
     - slug: gardener.nvim
       name: gardener.nvim
@@ -52,6 +52,13 @@
       language: C (generated), JavaScript
       license: MIT
       repos: [tree-sitter-spar]
+    - slug: vscode-spar
+      name: vscode-spar
+      summary: Visual Studio Code extension for SPAR assembly, with
+        highlighting and snippets.
+      language: JavaScript
+      license: MIT
+      repos: [vscode-spar]
 
 - group: Research code
   intro: Code from published research.
