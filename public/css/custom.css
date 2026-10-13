@@ -127,7 +127,8 @@ body {
 .project-card {
   display: flex;
   flex-direction: column;
-  padding: 1rem 1.25rem;
+  overflow: hidden;
+  padding: 0 1.25rem 1rem;
   border: 1px solid #e5e5e5;
   border-radius: 6px;
   color: inherit;
@@ -139,6 +140,15 @@ body {
   text-decoration: none;
   border-color: #268bd2;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.project-card-banner {
+  display: block;
+  width: calc(100% + 2.5rem);
+  max-width: none;
+  margin: 0 -1.25rem 0.85rem;
+  aspect-ratio: 4 / 1;
+  object-fit: cover;
 }
 
 .project-card-name {
@@ -161,6 +171,14 @@ body {
 .project-back {
   margin-bottom: 0.5rem;
   font-size: 0.9rem;
+}
+
+.project-banner {
+  display: block;
+  width: 100%;
+  margin: 0.5rem 0 1.5rem;
+  border-radius: 8px;
+  aspect-ratio: 4 / 1;
 }
 
 .project-header {

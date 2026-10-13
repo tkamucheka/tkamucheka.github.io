@@ -19,6 +19,7 @@ the code behind my research. Every project is on
 <div class="project-list">
   {% for project in group.projects %}
   <a class="project-card" href="{{ '/projects/' | append: project.slug | append: '/' | relative_url }}">
+    <img class="project-card-banner" src="{{ '/public/images/projects/' | append: project.slug | append: '.svg' | relative_url }}" alt="">
     <span class="project-card-name">{{ project.name }}</span>
     <span class="project-card-summary">{{ project.summary }}</span>
     <span class="project-card-language">{{ project.language }}</span>

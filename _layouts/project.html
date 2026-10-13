@@ -17,6 +17,8 @@ A project landing page. The page names its entry in _data/projects.yml with
     <a href="{{ '/projects/' | relative_url }}">&larr; Projects</a>
   </p>
 
+  <img class="project-banner" src="{{ '/public/images/projects/' | append: project.slug | append: '.svg' | relative_url }}" alt="">
+
   <header class="project-header">
     <h1 class="project-name">{{ project.name }}</h1>
     <p class="project-summary">{{ project.summary }}</p>
