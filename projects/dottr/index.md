@@ -1,10 +1,10 @@
 ---
 layout: project
-title: dottr
+title: Dottr
 project: dottr
 ---
 
-dottr sets up a machine from a manifest. The manifest declares the packages
+Dottr sets up a machine from a manifest. The manifest declares the packages
 and configuration of the machine as units, written in a small language: a
 unit installs a package, or runs shell scripts gated on checks of the host,
 and may depend on other units. `dottr apply` brings the machine to the

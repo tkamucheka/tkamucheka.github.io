@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 300" role="img" aria-label="A SPAR assembly program multiplying a matrix by a vector, reducing, and adding a vector">
+  <defs>
+    <pattern id="dots" width="24" height="24" patternUnits="userSpaceOnUse">
+      <circle cx="12" cy="12" r="1.3" fill="#2c2c2c"/>
+    </pattern>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0 0L10 5L0 10z" fill="#268bd2"/>
+    </marker>
+    <marker id="arrow-dim" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0L10 5L0 10z" fill="#6f6f6f"/>
+    </marker>
+  </defs>
+  <rect width="1200" height="300" fill="#202020"/>
+  <rect width="1200" height="300" fill="url(#dots)"/>
+  <rect x="90" y="90" width="26" height="26" rx="4" fill="#268bd2" fill-opacity="0.49"/>
+  <rect x="120" y="90" width="26" height="26" rx="4" fill="#268bd2" fill-opacity="0.36"/>
+  <rect x="150" y="90" width="26" height="26" rx="4" fill="#268bd2" fill-opacity="0.74"/>
+  <rect x="180" y="90" width="26" height="26" rx="4" fill="#268bd2" fill-opacity="0.30"/>
+  <rect x="90" y="120" width="26" height="26" rx="4" fill="#268bd2" fill-opacity="0.65"/>
+  <rect x="120" y="120" width="26" height="26" rx="4" fill="#268bd2" fill-opacity="0.52"/>
+  <rect x="150" y="120" width="26" height="26" rx="4" fill="#268bd2" fill-opacity="0.29"/>
+  <rect x="180" y="120" width="26" height="26" rx="4" fill="#268bd2" fill-opacity="0.63"/>
+  <rect x="90" y="150" width="26" height="26" rx="4" fill="#268bd2" fill-opacity="0.28"/>
+  <rect x="120" y="150" width="26" height="26" rx="4" fill="#268bd2" fill-opacity="0.58"/>
+  <rect x="150" y="150" width="26" height="26" rx="4" fill="#268bd2" fill-opacity="0.30"/>
+  <rect x="180" y="150" width="26" height="26" rx="4" fill="#268bd2" fill-opacity="0.32"/>
+  <rect x="90" y="180" width="26" height="26" rx="4" fill="#268bd2" fill-opacity="0.57"/>
+  <rect x="120" y="180" width="26" height="26" rx="4" fill="#268bd2" fill-opacity="0.87"/>
+  <rect x="150" y="180" width="26" height="26" rx="4" fill="#268bd2" fill-opacity="0.34"/>
+  <rect x="180" y="180" width="26" height="26" rx="4" fill="#268bd2" fill-opacity="0.42"/>
+  <text x="148" y="238" fill="#6f6f6f" font-family="'Fira Code', 'SFMono-Regular', Menlo, Consolas, monospace" font-size="14" font-weight="normal" text-anchor="middle">m  matrix&lt;8,8&gt;</text>
+  <text x="240" y="160" fill="#f2f2f2" font-family="'PT Sans', Helvetica, Arial, sans-serif" font-size="36" font-weight="normal" text-anchor="middle">×</text>
+  <rect x="270" y="135" width="26" height="26" rx="4" fill="#2aa198" fill-opacity="0.35"/>
+  <rect x="300" y="135" width="26" height="26" rx="4" fill="#2aa198" fill-opacity="0.50"/>
+  <rect x="330" y="135" width="26" height="26" rx="4" fill="#2aa198" fill-opacity="0.65"/>
+  <rect x="360" y="135" width="26" height="26" rx="4" fill="#2aa198" fill-opacity="0.80"/>
+  <text x="328" y="238" fill="#6f6f6f" font-family="'Fira Code', 'SFMono-Regular', Menlo, Consolas, monospace" font-size="14" font-weight="normal" text-anchor="middle">v1  row</text>
+  <line x1="400" y1="150" x2="450" y2="150" stroke="#268bd2" stroke-width="2.5" marker-end="url(#arrow)"/>
+  <rect x="465" y="100" width="100" height="100" rx="10" fill="#272727" stroke="#3a3a3a" stroke-width="1.5"/>
+  <text x="515" y="165" fill="#f2f2f2" font-family="'PT Sans', Helvetica, Arial, sans-serif" font-size="46" font-weight="normal" text-anchor="middle">Σ</text>
+  <text x="515" y="228" fill="#6f6f6f" font-family="'Fira Code', 'SFMono-Regular', Menlo, Consolas, monospace" font-size="14" font-weight="normal" text-anchor="middle">REDUCE</text>
+  <text x="600" y="162" fill="#f2f2f2" font-family="'PT Sans', Helvetica, Arial, sans-serif" font-size="34" font-weight="normal" text-anchor="middle">+</text>
+  <rect x="630" y="90" width="26" height="26" rx="4" fill="#2aa198" fill-opacity="0.35"/>
+  <rect x="630" y="120" width="26" height="26" rx="4" fill="#2aa198" fill-opacity="0.50"/>
+  <rect x="630" y="150" width="26" height="26" rx="4" fill="#2aa198" fill-opacity="0.65"/>
+  <rect x="630" y="180" width="26" height="26" rx="4" fill="#2aa198" fill-opacity="0.80"/>
+  <text x="643" y="238" fill="#6f6f6f" font-family="'Fira Code', 'SFMono-Regular', Menlo, Consolas, monospace" font-size="14" font-weight="normal" text-anchor="middle">v2</text>
+  <line x1="675" y1="150" x2="725" y2="150" stroke="#268bd2" stroke-width="2.5" marker-end="url(#arrow)"/>
+  <rect x="740" y="90" width="26" height="26" rx="4" fill="#859900" fill-opacity="0.45"/>
+  <rect x="740" y="120" width="26" height="26" rx="4" fill="#859900" fill-opacity="0.75"/>
+  <rect x="740" y="150" width="26" height="26" rx="4" fill="#859900" fill-opacity="0.45"/>
+  <rect x="740" y="180" width="26" height="26" rx="4" fill="#859900" fill-opacity="0.75"/>
+  <text x="753" y="238" fill="#6f6f6f" font-family="'Fira Code', 'SFMono-Regular', Menlo, Consolas, monospace" font-size="14" font-weight="normal" text-anchor="middle">out</text>
+  <text x="830" y="62" font-family="'Fira Code', 'SFMono-Regular', Menlo, Consolas, monospace" font-size="15" xml:space="preserve"><tspan fill="#268bd2">LOADM     </tspan><tspan fill="#d6d6d6">R1, m</tspan></text>
+  <text x="830" y="88" font-family="'Fira Code', 'SFMono-Regular', Menlo, Consolas, monospace" font-size="15" xml:space="preserve"><tspan fill="#268bd2">LOADROWV  </tspan><tspan fill="#d6d6d6">R2, v1</tspan></text>
+  <text x="830" y="114" font-family="'Fira Code', 'SFMono-Regular', Menlo, Consolas, monospace" font-size="15" xml:space="preserve"><tspan fill="#268bd2">MULT      </tspan><tspan fill="#d6d6d6">R3, R1, R2</tspan></text>
+  <text x="830" y="140" font-family="'Fira Code', 'SFMono-Regular', Menlo, Consolas, monospace" font-size="15" xml:space="preserve"><tspan fill="#268bd2">REDUCE    </tspan><tspan fill="#d6d6d6">R4, R3</tspan></text>
+  <text x="830" y="166" font-family="'Fira Code', 'SFMono-Regular', Menlo, Consolas, monospace" font-size="15" xml:space="preserve"><tspan fill="#268bd2">LOADCOLV  </tspan><tspan fill="#d6d6d6">R5, v2</tspan></text>
+  <text x="830" y="192" font-family="'Fira Code', 'SFMono-Regular', Menlo, Consolas, monospace" font-size="15" xml:space="preserve"><tspan fill="#268bd2">ADD       </tspan><tspan fill="#d6d6d6">R6, R4, R5</tspan></text>
+  <text x="830" y="218" font-family="'Fira Code', 'SFMono-Regular', Menlo, Consolas, monospace" font-size="15" xml:space="preserve"><tspan fill="#268bd2">STORECOLV </tspan><tspan fill="#d6d6d6">R6, out</tspan></text>
+</svg>

@@ -2,12 +2,12 @@
 # landing page at /projects/<slug>/ whose front matter names it with
 # `project: <slug>`.
 
-- group: dottr
+- group: Dottr
   intro: A dotfiles and package manager with its own manifest language, and
     its editor support.
   projects:
     - slug: dottr
-      name: dottr
+      name: Dottr
       summary: Sets up a machine from a manifest of packages, configuration,
         and shell scripts, on Linux, macOS, and Windows.
       language: C
@@ -15,13 +15,13 @@
       repos: [dottr]
     - slug: tree-sitter-dottr
       name: tree-sitter-dottr
-      summary: Tree-sitter grammar and editor queries for dottr manifests.
+      summary: Tree-sitter grammar and editor queries for Dottr manifests.
       language: C (generated), JavaScript
       license: MIT
       repos: [tree-sitter-dottr]
     - slug: vscode-dottr
       name: vscode-dottr
-      summary: Visual Studio Code extension for dottr manifests, with the dottr
+      summary: Visual Studio Code extension for Dottr manifests, with the Dottr
         language server.
       language: TypeScript
       license: MIT
@@ -45,12 +45,13 @@
       language: C (generated), JavaScript
       license: MIT
       repos: [tree-sitter-mlir]
-    - slug: tree-sitter-sparhl
-      name: tree-sitter-sparhl
-      summary: A tree-sitter grammar and highlighting for SPARHL programs.
+    - slug: tree-sitter-spar
+      name: tree-sitter-spar
+      summary: A tree-sitter grammar and highlighting for SPAR assembly, the
+        assembly language of the SPAR processor.
       language: C (generated), JavaScript
       license: MIT
-      repos: [tree-sitter-sparhl]
+      repos: [tree-sitter-spar]
 
 - group: Research code
   intro: Code from published research.

@@ -4,7 +4,7 @@ title: vscode-dottr
 project: vscode-dottr
 ---
 
-Visual Studio Code support for [dottr](../dottr/) manifests (`*.dotfile`):
+Visual Studio Code support for [Dottr](../dottr/) manifests (`*.dotfile`):
 
 * highlighting, including the scripts of `shell` blocks, as shell or
   PowerShell scripts;
@@ -16,12 +16,12 @@ Visual Studio Code support for [dottr](../dottr/) manifests (`*.dotfile`):
 * formatting, comment toggling, auto-closing quotes and `@{...}`, and
   indentation of blocks.
 
-Everything but highlighting and editing is provided by the dottr language
-server, `dottr-lsp`, which is installed with dottr.
+Everything but highlighting and editing is provided by the Dottr language
+server, `dottr-lsp`, which is installed with Dottr.
 
 ## Installation
 
-Requirements: VS Code 1.91 or later, [dottr](../dottr/#installation), and
+Requirements: VS Code 1.91 or later, [Dottr](../dottr/#installation), and
 Node.js to build the extension package:
 
 ```sh

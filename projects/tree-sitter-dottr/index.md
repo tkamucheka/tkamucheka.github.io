@@ -5,14 +5,14 @@ project: tree-sitter-dottr
 ---
 
 A [tree-sitter](https://tree-sitter.github.io/) grammar for
-[dottr](../dottr/) manifests (`*.dotfile`), with queries for:
+[Dottr](../dottr/) manifests (`*.dotfile`), with queries for:
 
 * highlighting, including the scripts of `shell` blocks, highlighted as
   bash, zsh, or PowerShell;
 * folds and indentation;
 * text objects for units, blocks, conditionals, and variables.
 
-Diagnostics, navigation, completion, and formatting come from the dottr
+Diagnostics, navigation, completion, and formatting come from the Dottr
 language server, `dottr-lsp`.
 
 ## Neovim
