@@ -5,7 +5,7 @@ date: 2018-04-14 12:35:01 -0500
 category: blog
 ---
 
-![Hello World!]({{ "/assets/hello-world.jpg" | absolute_url }})
+![Hello World!]({{ "/assets/hello-world.jpg" | relative_url }})
 
 I have been thinking about blogging for a while. In fact, starting a blog was one of my goals for 2017. Problem was, I never could come up with something to write or so I thought. Perhaps the time just wasn't right for it.
 

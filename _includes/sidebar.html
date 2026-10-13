@@ -6,7 +6,7 @@
           <div id="photo-circle">
             <img
               id="photo"
-              src="{{ '/public/images/profile.jpeg' | absolute_url }}"
+              src="{{ '/public/images/profile.jpeg' | relative_url }}"
             />
           </div>
         </center>
@@ -24,7 +24,7 @@
         <p class="sidebar-text text-center">University of Arkansas</p>
         <p class="sidebar-text text-center">tfkamuch@uark.edu</p>
         <p class="sidebar-text text-center">
-          <a href="{{ '/assets/tkamucheka_resume.pdf' | absolute_url }}" download>
+          <a href="{{ '/assets/tkamucheka_resume.pdf' | relative_url }}" download>
             Download Resume
           </a>
         </p>
@@ -37,7 +37,7 @@
       <nav class="sidebar-nav text-md-right">
         <a
           class="sidebar-nav-item{% if page.url == site.baseurl %} active{% endif %}"
-          href="{{ site.baseurl | absolute_url }}"
+          href="{{ '/' | relative_url }}"
         >Home</a>
 
         {% comment %} 
@@ -51,7 +51,7 @@
             {% if node.nav_link %}
         <a
           class="sidebar-nav-item{% if page.url == node.url or page.layout == 'project' and node.url == '/projects/' %} active{% endif %}"
-          href="{{ node.url | absolute_url }}"
+          href="{{ node.url | relative_url }}"
           >{{ node.title }}</a>
             {% endif %} 
           {% endif %} 
